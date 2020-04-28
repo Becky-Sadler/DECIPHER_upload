@@ -43,4 +43,15 @@ def URL(path):
 	url = 'https://decipher.sanger.ac.uk/API' + path
 	return url
 
- 
+# Getting project code from info endpoint 
+url = URL('/info')
+
+response = GET(url, keys)
+
+project = response.json()
+project_id = (project['user']['project']['project_id'])
+
+patient = {}
+patient['project_id'] = project_id
+patient['sex'] = 'unknown'
+patient['reference'] = 'OXF1234' 
