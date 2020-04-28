@@ -16,4 +16,10 @@ keys = {
     'X-Auth-Token-User':user_key,
     'Content-Type': 'application/json',
 }
-print(keys) 
+
+def GET(url, header):
+	response = requests.get(url, headers=header)
+	if response.status_code ==200:
+		return response
+	else: 
+		return None 
