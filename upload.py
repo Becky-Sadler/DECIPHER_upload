@@ -2,8 +2,18 @@ import requests
 import json
 import yaml
 from requests import HTTPError
+import pandas
 
 # creating a header variable with the authentication and content_type information - does not need to be repeated as it is uniform
+
+# Formatting of the reference value
+
+with open('reference.txt','r+') as f:
+    lines = f.readlines()
+    number = int(lines[0])
+    reference = lines[1].strip() + lines[0].strip()
+    f.seek(0)
+    f.write(str(number + 1))
 
 config = yaml.safe_load(open("DECIPHER_config.yml"))
  
