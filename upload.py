@@ -37,4 +37,10 @@ def POST(url, header, data):
 	else:
 		return None
 
+# URL function 
+
+def URL(path):
+	url = 'https://decipher.sanger.ac.uk/API' + path
+	return url
+
  
