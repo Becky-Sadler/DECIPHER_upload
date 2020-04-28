@@ -51,7 +51,17 @@ response = GET(url, keys)
 project = response.json()
 project_id = (project['user']['project']['project_id'])
 
+# creation of patient dictionary
 patient = {}
 patient['project_id'] = project_id
 patient['sex'] = 'unknown'
 patient['reference'] = 'OXF1234' 
+
+# Creating the patient on DECIPHER - first URL is assigned.
+url = URL('/projects/{0}/patients'.format(project_id))
+
+# Dictionary is converted to JSON - need to put [] around the dictionary so the resulting json is in the right format.
+patientdata = json.dumps([patient])
+
+# Patient is created within DECIPHER
+response = POST(url, keys, patientdata)
