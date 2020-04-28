@@ -22,4 +22,19 @@ def GET(url, header):
 	if response.status_code ==200:
 		return response
 	else: 
-		return None 
+		return None
+
+# POST request
+
+def POST(url, header, data):
+	try:
+		response = requests.post(url, headers=header, data=data)
+		response.raise_for_status()
+	except HTTPError as err:
+		print("Error: {0}".format(err))
+	if response.status_code ==200:
+		return response
+	else:
+		return None
+
+ 
