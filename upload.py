@@ -87,7 +87,7 @@ with open('test.csv') as csvfile:
     dicts = list(reader) 
 
 # Filter out the class1 and 2 variants (do not need to be uploaded)
-filtered = list(filter(lambda i: i['Class'] != ('Class 2-Unlikely pathogenic' or 'Class 1-Certainly not pathogenic') , dicts))
+filtered = list(filter(lambda i: i['Classification'] != ('1' or '2') , dicts))
 
 # Assigning the url for creating snvs and cnvs.
 snv_url = URL('/patients/{0}/snvs'.format(patients_id))
@@ -99,12 +99,10 @@ filtered_snv = []
 filtered_cnv = [] 
 
 for f in filtered:
-    if re.search('del', f['gNomen']) or re.search('dup', f['gNomen']) or re.search('ins', f['gNomen']) or re.search('inv', f['gNomen']) or re.search('delins', f['gNomen']) or re.search('con', f['gNomen']):
+    if f['VarType'] == 'Duplication' or f['VarType'] == 'Deletion':
         filtered_cnv.append(f)
-    else:
+    elif f['VarType'] == 'Substitution':
         filtered_snv.append(f)
-#print(filtered_snv)
-#print(filtered_cnv)
 
 # Pull out the relevant information from the dictionaries into JSON for upload. 
 for i in filtered_snv: 
@@ -115,20 +113,15 @@ for i in filtered_snv:
         snv['assembly'] = 'GRCh37/hg19'
     elif i['Assembly'] == 'GRCh38':
         snv['assembly'] = 'GRCh38'
+    else:
+        print('Check transcript')
 
     snv['chr'] = i['Chrom']
 
-    genomicstart = i['gNomen']
-    splitstart = re.findall("([0-9])", genomicstart)
-    start = int(''.join(splitstart))
-    snv['start'] = start
+    snv['start'] = i['Pos']
 
-    alleles = i['gNomen']
-    allelelist = [i for i, c in enumerate(alleles) if c.isupper()]
-    ref_allele = alleles[allelelist[0]]
-    alt_allele = alleles[allelelist[1]]
-    snv['ref_allele'] = ref_allele
-    snv['alt_allele'] = alt_allele
+    snv['ref_allele'] = i['RefAllele']
+    snv['alt_allele'] = i['AltAllele']
 
     if re.match("homozygous$", i['Phenotype'], flags=re.I): #re.I == ignorecase
         snv['genotype'] = 'Homozygous'
@@ -139,12 +132,12 @@ for i in filtered_snv:
 
     snv['user_transcript'] = i['Transcript']
 
-    classification = i['Class']
-    if classification == 'Class 3-Unknown pathogenicity':
+    classification = i['Classification']
+    if classification == '3':        
         snv['pathogenicity'] = 'Uncertain'
-    elif classification == 'Class 4-Likely pathogenic':
+    elif classification == '4': 
         snv['pathogenicity'] = 'Likely pathogenic'
-    elif classification == 'Class 5-Certainly pathogenic':
+    elif classification == '5':
         snv['pathogenicity'] = 'Pathogenic'
 
 	# Creating JSON
@@ -168,19 +161,9 @@ for i in filtered_cnv:
     elif i['Assembly'] == 'GRCh38':
         cnv['assembly'] == 'GRCh38'
 
-    if re.search('del', i['gNomen']):
-        cnv['variant_class'] = 'Deletion'
-        if re.search('_', i['gNomen']):
-            start_end = re.search(r'\d*_\d*', i['gNomen']).group()
-            start, end = start_end.split('_')
-            cnv['start'] = start
-            cnv['end'] = start + 1
-        else: 
-            start = int(''.join(re.findall('([0-9])', i['gNomen'])))
-            cnv['start'] = start
-            cnv['end'] = start 
-    else:
-        cnv['variant_class'] = 'Duplication'
+    cnv['start'] = i['Start']
+    cnv['end'] = i['End']
+    cnv['variant_class'] = i['VarType']
 
     if re.match('homozygous$', i['Phenotype'], flags=re.I):
         cnv['genotype'] = 'Homozygous'
@@ -189,12 +172,12 @@ for i in filtered_cnv:
     else:
         cnv['genotype'] = 'Heterozygous' 
 
-    classification = i['Class']
-    if classification == 'Class 3-Unknown pathogenicity':
+    classification = i['Classification']
+    if classification == '3':
         cnv['pathogenicity'] = 'Uncertain'
-    elif classification == 'Class 4-Likely pathogenic':
+    elif classification == '4':
         cnv['pathogenicity'] = 'Likely pathogenic'
-    elif classification == 'Class 5-Certainly pathogenic':
+    elif classification == '5':
         cnv['pathogenicity'] = 'Pathogenic'
 
     # Creating JSON
