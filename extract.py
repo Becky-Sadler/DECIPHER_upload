@@ -145,7 +145,7 @@ for filepath in glob.iglob('*.mut'):
     # Matches initials 
     initials = re.compile(r'([A-Z]{2,5} )|([A-Z]{1,2}[a-z][A-Z]{1,2} )|([A-Z]{2}\'[A-Z] )|([A-Z]{1,2}[-.][A-Z]{1,2})|([A-Z]{2}[a-z][A-Z]{0,1} )|^([A-Z]{2})|([A-Z]{1-4}\()')
     # Matches patientIDs that contain the words in the list searchlist. 
-    searchlist = ['et al', '[Rr][Ee][Vv][Ii][Ee][Ww]', 'OR calc', '[Cc][Oo][Nn][Tt][Rr][Oo][Ll]', 'LOVD', 'OMGL', 'NCBI', 'mix up', '[iI]nvestigation', 'GEL', '[Rr][Nn][Aa]', 'Reclassification', 'GENQA', 'ClinVar', 'HGMD', 'ARVC', 'dbSNP', 'ExAC', 'NHLBI', 'gnomAD', 'TOPMED', 'WTCHG', 'NEQAS', 'E[VS][SP]', '(rs[\d ]\d+)']
+    searchlist = ['et al', '[Rr][Ee][Vv][Ii][Ee][Ww]', 'OR calc', '[Cc][Oo][Nn][Tt][Rr][Oo][Ll]', 'LOVD', 'OMGL', 'NCBI', 'mix up', 'GEL', '[Rr][Nn][Aa]', '[Rr]eclassification', 'GENQA', 'ClinVar', 'HGMD', 'ARVC', 'dbSNP', 'ExAC', 'NHLBI', 'gnomAD', 'TOPMED', 'WTCHG', 'NEQAS', 'E[VS][SP]', '(rs[\d ]\d+)']
     words = re.compile("|".join(searchlist))
     # Matches family_IDs (CAR/GEN/Number assortment)
     family_id = re.compile(r'(CAR[\d]{1,5})|(GEN[\d]{1,5})|(^\d{1,4}$)|(^\d{1,4}[\( ])|(\d{1,2},\d{1,5})')
