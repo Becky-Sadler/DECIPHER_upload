@@ -2,7 +2,8 @@ import requests
 import json
 import yaml
 from requests import HTTPError
-import pandas
+import pandas as pd 
+import re
 
 # creating a header variable with the authentication and content_type information - does not need to be repeated as it is uniform
 
@@ -65,7 +66,7 @@ project_id = (project['user']['project']['project_id'])
 patient = {}
 patient['project_id'] = project_id
 patient['sex'] = 'unknown'
-patient['reference'] = 'OXF1234' 
+patient['reference'] = reference
 
 # Creating the patient on DECIPHER - first URL is assigned.
 url = URL('/projects/{0}/patients'.format(project_id))
@@ -75,3 +76,41 @@ patientdata = json.dumps([patient])
 
 # Patient is created within DECIPHER
 response = POST(url, keys, patientdata)
+
+patient = response.json()
+patients_id = (patient[0]['patient_id'])
+
+# creation of snv dictionary 
+
+data = pd.read_csv('test.csv')
+
+snv = {}
+snv['patient_id'] = patients_id
+snv['assembly'] = data['Assembly'][0]
+snv['chr'] = int(data['Chrom'][0])
+
+genomicstart = data['gNomen'][0]
+splitstart = re.findall("([0-9])", genomicstart)
+start = int(''.join(splitstart))
+snv['start'] = start
+
+alleles = data['gNomen'][0]
+allelelist = [i for i, c in enumerate(alleles) if c.isupper()]
+ref_allele = alleles[allelelist[0]]
+alt_allele = alleles[allelelist[1]]
+snv['ref_allele'] = ref_allele
+snv['alt_allele'] = alt_allele
+
+if re.match("homozygous$", data['Phenotype'][0], flags=re.I): #re.I == ignorecase
+    genotype = 'Homozygous'
+elif re.match("homozygous$", data['Comment'][0], flags=re.I):
+    genotype = 'Homozygous'
+else:
+    genotype = 'Heterozygous'
+snv['genotype'] = genotype
+
+snv['user_transcript'] = data['Transcript'][0] 
+
+snvdata = json.dumps([snv])
+
+print(snvdata)
