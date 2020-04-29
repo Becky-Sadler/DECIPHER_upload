@@ -174,7 +174,7 @@ for i in filtered_cnv:
             start_end = re.search(r'\d*_\d*', i['gNomen']).group()
             start, end = start_end.split('_')
             cnv['start'] = start
-            cnv['end'] = end
+            cnv['end'] = start + 1
         else: 
             start = int(''.join(re.findall('([0-9])', i['gNomen'])))
             cnv['start'] = start
@@ -199,9 +199,9 @@ for i in filtered_cnv:
 
     # Creating JSON
     cnvdata = json.dumps([cnv])
-    # Posting SNV
+    # Posting CNV
     response = POST(cnv_url, keys, cnvdata)
-    # Extracting the SNV_id and adding them to a list.
+    # Extracting the CNV_id and adding them to a list.
     JSONcnv = response.json()
     id_cnv = (JSONcnv[0]['patient_cnv_id'])
     cnv_ids.append(id_cnv)
