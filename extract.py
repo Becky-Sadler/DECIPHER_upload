@@ -7,7 +7,7 @@ import pandas as pd
 import glob
 
 def cleanhtml(raw_html):
-# removing the formatting and one line that I couldn't figure out a regex for)
+	# removing the formatting and one line that I couldn't figure out a regex for)
   rem_html = re.compile(r'<.*?>')
   rem_other = re.compile(r'p, li { white-space: pre-wrap; }')
   clean = rem_html.sub('', raw_html)
@@ -18,11 +18,12 @@ for filepath in glob.iglob('*.mut'):
     tree = ET.parse(filepath)
     root = tree.getroot()
 
-# open a file to write the data into - the csv file is named after the gene file using the filename from alamut_file
+    # open a file to write the data into - the csv file is named after the gene file using the filename from alamut_file
 
-	filename, extension = os.path.splitext(filepath)
+    filename, extension = os.path.splitext(filepath)
     csvname = '{0}.csv'.format(filename)
-    extract_data = open(csvname, 'wt')
+# if on windows must use 'w' and newline='' rather than 'wb' to stop newlines being added. 
+    extract_data = open(csvname, 'w', newline='', encoding='utf-8')
 
     # create csv writer object 
 
@@ -37,20 +38,19 @@ for filepath in glob.iglob('*.mut'):
     for member in root.findall('Mutation'):
         assembly = member.attrib['refAssembly']
         #print(assembly)
-
+        
         chromosome = member.attrib['chr']
         #print(chromosome)
 
         gene = member.attrib['geneSym']
         #print(gene)
-
+        
         vartype = member.find('Variant').attrib['type']
         #print(vartype)
 
         # Extracting the information that is specific to the different variant types.
-
         if vartype == 'Substitution':
-        	position = member.find('Variant').attrib['pos']
+    	    position = member.find('Variant').attrib['pos']
     	    #print(position)
     	    #refallele = member.find('Variant').attrib['baseFrom'] This is the code used to pull the ref and alt allele directly from the XML (not right)
     	    #altallele = member.find('Variant').attrib['baseTo']
@@ -60,11 +60,13 @@ for filepath in glob.iglob('*.mut'):
     	    altallele = nomen[allelelist[1]]
     	    #print(refallele)
     	    #print(altallele)
+
         elif vartype == 'Deletion' or vartype == 'Duplication':
         	start = member.find('Variant').attrib['from']
         	#print(start)
         	end = member.find('Variant').attrib['to']
         	#print(end)
+
         elif vartype == 'Delins':
         	start = member.find('Variant').attrib['from']
         	#print(start)
@@ -86,7 +88,7 @@ for filepath in glob.iglob('*.mut'):
         		classification = 3
         	elif member.find('Classification').attrib['val'] == 3:
         		classification = 5  
-
+        	
         #print(classification)
 
         # Loop to extract all the occurences for each variant
@@ -102,7 +104,7 @@ for filepath in glob.iglob('*.mut'):
             	#print(familyID)
             else: 
             	familyID = None 
-
+           
             if child.find('Phenotype').text != None:
             	rawphenotype = child.find('Phenotype').text
             	phenotype = cleanhtml(rawphenotype)
@@ -138,7 +140,7 @@ for filepath in glob.iglob('*.mut'):
     if row_count == (count +1):
     	pass
     else:
-    	print('The number of occurences does not match the number recorded in the csv. The count is ' + str(count + 1) + ' the number of lines in the csv file is ' + str(lines))
+    	print('The number of occurences does not match the number recorded in the csv. The count is ' + str(count + 1) + ' the number of lines in the csv file is ' + str(row_count))
 
     # Matches patientIDs using separate regexes and or statements(|)  
     Onumber_loc = re.compile(r'(\d{1,4}[A-Ha-h](\d){1,2})|([O0o]\d{7})')
@@ -179,13 +181,13 @@ for filepath in glob.iglob('*.mut'):
         #If none of the conditions are met drop the row (i.e no patient identifiers are detected)
         else: 
             df.drop(index, inplace = True)
-	df.to_csv('filtered_{}.csv'.format(gene), index=False) 
+
+    df.to_csv('filtered_{}.csv'.format(gene), index=False) 
 
 
 ''' Check between the filtered csv and a csv that I manually went through and deleted non-patient records. This is used to verify that the programme
     is extracting the correct rows from the complete csv. 
     '''
-
 '''
 known = [tuple()]
 with open('test_csvs/{}_chopped.csv'.format(gene)) as csvfile:
@@ -197,7 +199,6 @@ with open('test_csvs/{}_chopped.csv'.format(gene)) as csvfile:
             continue
         else:
             known.append((line['PatientID'], line['FamilyID']))
-
 filtered = [tuple()]
 with open('filtered_{}.csv'.format(gene)) as csvfile:
     reader = csv.DictReader(csvfile, delimiter = ',')
@@ -205,10 +206,8 @@ with open('filtered_{}.csv'.format(gene)) as csvfile:
     print('Filtered: ' + str(len(dicts)))
     for line in dicts:
         filtered.append((line['PatientID'], line['FamilyID']))
-
 check = [x for x in known if x not in filtered]
 print(check)
-
 print('--------------------------------------------------------------------------------')
 check1 = [x for x in filtered if x not in known]
-print(check1) '''
+print(check1)'''
