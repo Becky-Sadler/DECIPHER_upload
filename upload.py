@@ -84,40 +84,42 @@ patients_id = (patient[0]['patient_id'])
 
 data = pd.read_csv('test.csv')
 
-snv = {}
-snv['patient_id'] = patients_id
-snv['assembly'] = data['Assembly'][0]
-snv['chr'] = int(data['Chrom'][0])
+for row in data.itertuples(): 
+    snv = {}
+    snv['patient_id'] = patients_id
+    snv['assembly'] = data['Assembly'][row]
+    snv['chr'] = int(data['Chrom'][row])
 
-genomicstart = data['gNomen'][0]
-splitstart = re.findall("([0-9])", genomicstart)
-start = int(''.join(splitstart))
-snv['start'] = start
+    genomicstart = data['gNomen'][row]
+    splitstart = re.findall("([0-9])", genomicstart)
+    start = int(''.join(splitstart))
+    snv['start'] = start
 
-alleles = data['gNomen'][0]
-allelelist = [i for i, c in enumerate(alleles) if c.isupper()]
-ref_allele = alleles[allelelist[0]]
-alt_allele = alleles[allelelist[1]]
-snv['ref_allele'] = ref_allele
-snv['alt_allele'] = alt_allele
+    alleles = data['gNomen'][row]
+    allelelist = [i for i, c in enumerate(alleles) if c.isupper()]
+    ref_allele = alleles[allelelist[0]]
+    alt_allele = alleles[allelelist[1]]
+    snv['ref_allele'] = ref_allele
+    snv['alt_allele'] = alt_allele
 
-if re.match("homozygous$", data['Phenotype'][0], flags=re.I): #re.I == ignorecase
-    genotype = 'Homozygous'
-elif re.match("homozygous$", data['Comment'][0], flags=re.I):
-    genotype = 'Homozygous'
-else:
-    genotype = 'Heterozygous'
-snv['genotype'] = genotype
+    if re.match("homozygous$", data['Phenotype'][row], flags=re.I): #re.I == ignorecase
+        genotype = 'Homozygous'
+    elif re.match("homozygous$", data['Comment'][row], flags=re.I):
+        genotype = 'Homozygous'
+    else:
+        genotype = 'Heterozygous'
+    snv['genotype'] = genotype
 
-snv['user_transcript'] = data['Transcript'][0] 
+    snv['user_transcript'] = data['Transcript'][row] 
 
-classification = data['Class'][0]
-if classification == 'Class 3-Unknown pathogenicity':
-    pathogenicity = 'Uncertain'
-elif classification == 'Class 4-Likely pathogenic':
-    pathogenicity = 'Likely pathogenic'
-elif classification == 'Class 5-Certainly pathogenic':
-    pathogenicity = 'Pathogenic' 
+    classification = data['Class'][row]
+    if classification == 'Class 3-Unknown pathogenicity':
+        pathogenicity = 'Uncertain'
+    elif classification == 'Class 4-Likely pathogenic':
+        pathogenicity = 'Likely pathogenic'
+    elif classification == 'Class 5-Certainly pathogenic':
+        pathogenicity = 'Pathogenic' 
+        
 # Test here to make sure that no class 1 or 2 are being made into dictionaries for upload? 
 snv['pathogenicity'] = pathogenicity 
 
