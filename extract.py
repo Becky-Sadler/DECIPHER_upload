@@ -133,10 +133,12 @@ with open(csvname) as csvfile:
     reader = csv.DictReader(csvfile, delimiter = ",")
     dicts = list(reader) 
 
-# Misses initials on their own... 
-patient_identifiers = re.compile(r'([A-Z]+ )|(O\d*)|(\d*[A-Z](\d){1,2})')
+# Matches patientIDs using separate regexes and or statements(|) (initials followed by ( or space | O number | Location | (initials) | initials on their own. 
+patient_identifiers = re.compile(r'^([A-Z]{1,3}[ \(])|(O\d+)|(\d*[A-Z](\d){1,2})|^[\( ]([A-Z])+[\) ]$|^([A-Z]){1,3}$')
+remove_journal = re.compile(r'^((?!et al).)*$')
 
 for line in dicts:
 	z = re.match(patient_identifiers, line['PatientID'])
-	if z:
-		print(line['PatientID']) 
+	x = re.match(remove_journal, line['PatientID'])
+	if z and x:
+		print(line['PatientID'])
