@@ -4,6 +4,7 @@ import yaml
 from requests import HTTPError
 import pandas as pd 
 import re
+import csv
 
 # creating a header variable with the authentication and content_type information - does not need to be repeated as it is uniform
 
@@ -82,47 +83,57 @@ patients_id = (patient[0]['patient_id'])
 
 # creation of snv dictionary 
 
-data = pd.read_csv('test.csv')
+''' data = pd.read_csv('test.csv')
 
-for row in data.itertuples(): 
+for row in data.iterrows():
     snv = {}
     snv['patient_id'] = patients_id
-    snv['assembly'] = data['Assembly'][row]
-    snv['chr'] = int(data['Chrom'][row])
+    snv['assembly'] = data['Assembly']
+    snv['chr'] = int(data['Chrom'])
 
-    genomicstart = data['gNomen'][row]
+    genomicstart = data['gNomen']
     splitstart = re.findall("([0-9])", genomicstart)
     start = int(''.join(splitstart))
     snv['start'] = start
 
-    alleles = data['gNomen'][row]
+    alleles = data['gNomen']
     allelelist = [i for i, c in enumerate(alleles) if c.isupper()]
     ref_allele = alleles[allelelist[0]]
     alt_allele = alleles[allelelist[1]]
     snv['ref_allele'] = ref_allele
     snv['alt_allele'] = alt_allele
 
-    if re.match("homozygous$", data['Phenotype'][row], flags=re.I): #re.I == ignorecase
+    if re.match("homozygous$", data['Phenotype'], flags=re.I): #re.I == ignorecase
         genotype = 'Homozygous'
-    elif re.match("homozygous$", data['Comment'][row], flags=re.I):
+    elif re.match("homozygous$", data['Comment'], flags=re.I):
         genotype = 'Homozygous'
     else:
         genotype = 'Heterozygous'
     snv['genotype'] = genotype
 
-    snv['user_transcript'] = data['Transcript'][row] 
+    snv['user_transcript'] = data['Transcript']
 
-    classification = data['Class'][row]
+    classification = data['Class']
     if classification == 'Class 3-Unknown pathogenicity':
         pathogenicity = 'Uncertain'
     elif classification == 'Class 4-Likely pathogenic':
         pathogenicity = 'Likely pathogenic'
     elif classification == 'Class 5-Certainly pathogenic':
         pathogenicity = 'Pathogenic' 
-        
+
 # Test here to make sure that no class 1 or 2 are being made into dictionaries for upload? 
 snv['pathogenicity'] = pathogenicity 
 
 snvdata = json.dumps([snv])
 
-print(snvdata)
+print(snvdata) '''
+
+with open('test.csv') as csvfile:
+    reader = csv.DictReader(csvfile, delimiter = ",")
+    dicts = list(reader) 
+
+for x in dicts:
+    if x['Class'] == 'Class 2-Unlikely pathogenic' or 'Class 1-Certainly not pathogenic':
+        dicts.remove(x)
+
+print(dicts)
