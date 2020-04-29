@@ -156,12 +156,12 @@ with open(csvname) as csvfile:
     	remove = re.match(words, line['PatientID'])
     	if patient or family:
 		    if remove:
-		    	print(line['PatientID'] + ' ' + line['FamilyID'])
+		    	continue
 		    else:
 		    	test_patient.append(line['PatientID'])
 		    	test_family.append(line['FamilyID'])
 
-with open('MYH7_chop.csv') as csvfile:
+with open('MYH7_manual_chop.csv') as csvfile:
 	reader = csv.DictReader(csvfile, delimiter = ',')
 	dicts = list(reader)
 	known_patient = []
