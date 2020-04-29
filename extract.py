@@ -23,6 +23,8 @@ root = tree.getroot()
 
 #extract_data.close() 
 
+variant_list = []
+
 for member in root.findall('Mutation'):
     assembly = member.attrib['refAssembly']
     print(assembly)
@@ -32,7 +34,8 @@ for member in root.findall('Mutation'):
     print(gene)
 
     vartype = member.find('Variant').attrib['type']
-    print(vartype)
+    variant_list.append(vartype)
+    
     if vartype == 'Substitution':
 	    position = member.find('Variant').attrib['pos']
 	    print(position)
@@ -41,13 +44,20 @@ for member in root.findall('Mutation'):
 	    altallele = member.find('Variant').attrib['baseTo']
 	    print(altallele)
 
-    elif vartype == 'Deletion':
-		start = member.find('Variant').attrib['from']
-		print(start)
-		end = member.find('Variant').attrib['to']
-		print(end)
-	# elif ... 
-	
+    elif vartype == 'Deletion' or vartype == 'Duplication':
+    	start = member.find('Variant').attrib['from']
+    	print(start)
+    	end = member.find('Variant').attrib['to']
+    	print(end)
+
+    elif vartype == 'Delins':
+    	start = member.find('Variant').attrib['from']
+    	print(start)
+    	end = member.find('Variant').attrib['to']
+    	print(end)
+    	inserted = member.find('Variant').attrib['inserted']
+    	print(inserted)
+
     transcript = member.find('Variant/Nomenclature').attrib['refSeq']
     print(transcript)
     classification = member.find('Classification').attrib['index']
