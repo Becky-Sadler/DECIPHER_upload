@@ -130,6 +130,18 @@ for i in filtered:
     elif classification == 'Class 5-Certainly pathogenic':
         pathogenicity = 'Pathogenic' 
 
-snvdata = json.dumps([snv])
+	# Creating JSON
+	snvdata = json.dumps([snv])
 
-print(snvdata) 
+	# Posting SNV
+    response = POST(url, keys, snvdata)
+    # Extracting the SNV_id and adding them to a list. 
+    snv_ids = []
+    JSONsnv = response.json()
+    id_snv = (JSONsnv[0]['patient_snv_id'])
+    snv_ids.append(id_snv)
+
+print(snv_ids)
+
+
+
