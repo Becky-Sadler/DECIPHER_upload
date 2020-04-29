@@ -142,6 +142,47 @@ if row_count == (count +1):
 else:
 	print('The number of occurences does not match the number recorded in the csv. The count is ' + str(count + 1) + ' the number of lines in the csv file is ' + str(lines))
 
-df = pd.read_csv('csvname')
+# Matches patientIDs using separate regexes and or statements(|) (initials followed by ( or space | O number | Location | (initials) | initials on their own. 
+#patient_identifiers = re.compile(r'^([A-Z]{1,4}[ \(])|([O, 0]\d+)|(\d*[A-Z](\d){1,2})|^[\( ]([A-Z])+[\) ]$|^([A-Z]){1,4}$')
+patient_identifiers = re.compile(r'([O0]\d{7})|(\d*[A-Z]{1}(\d){1,2})|([A-Z]){1,4}$')
+# Matches patientIDs that contain the words in the list searchlist. 
+searchlist = ['et al', '[Rr]eview', 'LOVD', 'HCMR', 'E[A-Z]{1,2}', 'NCBI', '[iI]nvestigation', 'HCM', 'Reclassification', 'ClinVar', 'HGMD', 'PARE', 'ARVC', 'dbSNP', 'ExAC', 'gnomAD', 'TOPMED']
+words = re.compile("|".join(searchlist))
+# Matches family_IDs (CAR/GEN)
+family_id = re.compile(r'(CAR[\d]{1,5})|(GEN[\d]{1,5})| (\d){1,5}')
 
-print(df)
+collected = [tuple()]
+missing = [tuple()]
+
+with open(csvname) as csvfile:
+    reader = csv.DictReader(csvfile, delimiter = ",") 
+    dicts = list(reader)
+
+    for line in dicts:
+        patient = re.search(patient_identifiers, line['PatientID'])
+        family = re.match(family_id, line['FamilyID'])
+        remove = re.match(words, line['PatientID'])
+        # Need to redo this
+        if line['PatientID'] == '' and line['FamilyID'] != '':
+            collected.append((line['PatientID'], line['FamilyID']))
+        elif patient or family:
+            if remove:
+                continue
+            else:
+                collected.append((line['PatientID'], line['FamilyID']))
+        else:
+            missing.append((line['PatientID'], line['FamilyID']))
+
+known = [tuple()]
+with open('MYH7_chop.csv') as csvfile:
+    reader = csv.DictReader(csvfile, delimiter = ',')
+    dicts = list(reader)
+    for line in dicts:
+        known.append((line['PatientID'], line['FamilyID']))
+
+
+check = [x for x in known if x not in collected]
+#print(check)
+
+check1 = [x for x in collected if x not in known]
+print(check1)
