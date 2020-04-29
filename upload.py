@@ -2,7 +2,7 @@ import requests
 import json
 import yaml
 from requests import HTTPError
-import pandas as pd 
+#import pandas as pd 
 import re
 import csv
 
@@ -86,14 +86,26 @@ with open('test.csv') as csvfile:
     reader = csv.DictReader(csvfile, delimiter = ",")
     dicts = list(reader) 
 
-# Filter out the class1 and 2 variants (do not need to be uploaded) 
-filtered = list(filter(lambda i: i['Class'] != ('Class 2-Unlikely pathogenic' or 'Class 1-Certainly not pathogenic') , dicts)) 
+# Filter out the class1 and 2 variants (do not need to be uploaded)
+filtered = list(filter(lambda i: i['Class'] != ('Class 2-Unlikely pathogenic' or 'Class 1-Certainly not pathogenic') , dicts))
 
 # Creating the patient on DECIPHER - first URL is assigned and then used for the POST request.
 url = URL('/patients/{0}/snvs'.format(patients_id))
 
+snv_ids = [] #list to hold the ids for the created snvs
+filtered_snv = []
+filtered_cnv = [] 
+
+for f in filtered:
+    if re.search('del', f['gNomen']) or re.search('dup', f['gNomen']) or re.search('ins', f['gNomen']) or re.search('inv', f['gNomen']) or re.search('delins', f['gNomen']) or re.search('con', f['gNomen']):
+        filtered_cnv.append(f)
+    else:
+        filtered_snv.append(f)
+#print(filtered_snv)
+#print(filtered_cnv)
+
 # Pull out the relevant information from the dictionaries into JSON for upload. 
-for i in filtered: 
+for i in filtered_snv: 
     snv = {}
     snv['patient_id'] = patients_id
 
@@ -142,12 +154,13 @@ for i in filtered:
 	# Posting SNV
     response = POST(url, keys, snvdata)
     # Extracting the SNV_id and adding them to a list. 
-    #snv_ids = []
-    #JSONsnv = response.json()
-    #id_snv = (JSONsnv[0]['patient_snv_id'])
-    #snv_ids.append(id_snv)
+    JSONsnv = response.json()
+    id_snv = (JSONsnv[0]['patient_snv_id'])
+    snv_ids.append(id_snv)
 
-#print(snv_ids)
+
+for i in filtered_cnv:
+    cnv = {}
 
 
 
