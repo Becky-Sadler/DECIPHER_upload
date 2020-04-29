@@ -34,7 +34,7 @@ def GET(url, header):
 	if response.status_code ==200:
 		return response
 	else: 
-		return None
+		print(response.content)
 
 # POST request
 
@@ -47,7 +47,7 @@ def POST(url, header, data):
 	if response.status_code ==200:
 		return response
 	else:
-		return None
+		print(response.content)
 
 # URL function 
 
@@ -89,16 +89,12 @@ with open('test.csv') as csvfile:
 # Filter out the class1 and 2 variants (do not need to be uploaded) 
 filtered = list(filter(lambda i: i['Class'] != ('Class 2-Unlikely pathogenic' or 'Class 1-Certainly not pathogenic') , dicts)) 
 
-# In preparation of upload of the snv data, assign the URL
-
-url = URL('/patients/{0}/snvs'.format(patients_id))
-
 # Pull out the relevant information from the dictionaries into JSON for upload. 
 for i in filtered: 
     snv = {}
     snv['patient_id'] = patients_id
     snv['assembly'] = i['Assembly']
-    snv['chr'] = int(i['Chrom'])
+    snv['chr'] = i['Chrom']
 
     genomicstart = i['gNomen']
     splitstart = re.findall("([0-9])", genomicstart)
@@ -131,17 +127,21 @@ for i in filtered:
         pathogenicity = 'Pathogenic' 
 
 	# Creating JSON
-	snvdata = json.dumps([snv])
+	snvdata = json.dumps(snv)
+    print(snvdata)
+    print(url)
 
 	# Posting SNV
+    # Creating the patient on DECIPHER - first URL is assigned and then used for the POST request.
+    url = URL('/projects/{0}/patients'.format(project_id))
     response = POST(url, keys, snvdata)
     # Extracting the SNV_id and adding them to a list. 
-    snv_ids = []
-    JSONsnv = response.json()
-    id_snv = (JSONsnv[0]['patient_snv_id'])
-    snv_ids.append(id_snv)
+    #snv_ids = []
+    #JSONsnv = response.json()
+    #id_snv = (JSONsnv[0]['patient_snv_id'])
+    #snv_ids.append(id_snv)
 
-print(snv_ids)
+#print(snv_ids)
 
 
 
