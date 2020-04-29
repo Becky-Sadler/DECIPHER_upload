@@ -118,8 +118,10 @@ for member in root.findall('Mutation'):
         # Adding a row to the csv file for each occurence (variation based on the variant type)
         if vartype == 'Substitution':
         	csvwriter.writerow([assembly, chromosome, gene, vartype, position, refallele, altallele, None, None, None, transcript, classification, patientID, familyID, phenotype, comment])
+        count = count + 1
         elif vartype == 'Deletion' or vartype == 'Duplication':
         	csvwriter.writerow([assembly, chromosome, gene, vartype, None, None, None, start, end, None, transcript, classification, patientID, familyID, phenotype, comment])
+        count = count + 1
         elif vartype == 'Delins':
         	csvwriter.writerow([assembly, chromosome, gene, vartype, None, None, None, start, end, inserted, transcript, classification, patientID, familyID, phenotype, comment])
         count = count + 1
@@ -130,8 +132,11 @@ extract_data.close()
 
 
 # Test to ensure the number of lines in the csv file matches the number of occurances. 
-lines = sum(1 for row in open(csvname))
-if lines == (count +1):
+with open(csvname,"r",encoding="utf-8") as f:
+     reader = csv.reader(f,delimiter = ",")
+     data = list(reader)
+     row_count = len(data) 
+if row_count == (count +1):
 	print('Number of rows in csv file matches number of occurances looped through')
 else:
 	print('The count is ' + str(count + 1) + ' the number of lines in the csv file is ' + str(lines))
@@ -157,6 +162,8 @@ with open(csvname) as csvfile:
     	if patient or family:
 		    if remove:
 		    	continue
+		    elif any(val in (None, '') for val in line['PatientID']):
+		    	print(line)
 		    else:
 		    	test_patient.append(line['PatientID'])
 		    	test_family.append(line['FamilyID'])
