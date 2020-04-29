@@ -89,10 +89,12 @@ with open('test.csv') as csvfile:
 # Filter out the class1 and 2 variants (do not need to be uploaded)
 filtered = list(filter(lambda i: i['Class'] != ('Class 2-Unlikely pathogenic' or 'Class 1-Certainly not pathogenic') , dicts))
 
-# Creating the patient on DECIPHER - first URL is assigned and then used for the POST request.
-url = URL('/patients/{0}/snvs'.format(patients_id))
+# Assigning the url for creating snvs and cnvs.
+snv_url = URL('/patients/{0}/snvs'.format(patients_id))
+cnv_url = URL('/patients/{0}/cnvs'.format(patients_id))
 
 snv_ids = [] #list to hold the ids for the created snvs
+cnv_ids = []
 filtered_snv = []
 filtered_cnv = [] 
 
@@ -129,30 +131,27 @@ for i in filtered_snv:
     snv['alt_allele'] = alt_allele
 
     if re.match("homozygous$", i['Phenotype'], flags=re.I): #re.I == ignorecase
-        genotype = 'Homozygous'
+        snv['genotype'] = 'Homozygous'
     elif re.match("homozygous$", i['Comment'], flags=re.I):
-        genotype = 'Homozygous'
+        snv['genotype'] = 'Homozygous'
     else:
-        genotype = 'Heterozygous'
-    snv['genotype'] = genotype
+        snv['genotype'] = 'Heterozygous'
 
     snv['user_transcript'] = i['Transcript']
 
     classification = i['Class']
     if classification == 'Class 3-Unknown pathogenicity':
-        pathogenicity = 'Uncertain'
+        snv['pathogenicity'] = 'Uncertain'
     elif classification == 'Class 4-Likely pathogenic':
-        pathogenicity = 'Likely pathogenic'
+        snv['pathogenicity'] = 'Likely pathogenic'
     elif classification == 'Class 5-Certainly pathogenic':
-        pathogenicity = 'Pathogenic' 
-
-    snv['pathogenicity'] = pathogenicity
+        snv['pathogenicity'] = 'Pathogenic'
 
 	# Creating JSON
     snvdata = json.dumps([snv])
 
 	# Posting SNV
-    response = POST(url, keys, snvdata)
+    response = POST(snv_url, keys, snvdata)
     # Extracting the SNV_id and adding them to a list. 
     JSONsnv = response.json()
     id_snv = (JSONsnv[0]['patient_snv_id'])
@@ -161,6 +160,50 @@ for i in filtered_snv:
 
 for i in filtered_cnv:
     cnv = {}
+    cnv['patient_id'] = patients_id
+    cnv['chr'] = i['Chrom']
 
+    if i['Assembly'] == 'GRCh37':
+        cnv['assembly'] = 'GRCh37/hg19'
+    elif i['Assembly'] == 'GRCh38':
+        cnv['assembly'] == 'GRCh38'
+
+    if re.search('del', i['gNomen']):
+        cnv['variant_class'] = 'Deletion'
+        if re.search('_', i['gNomen']):
+            start_end = re.search(r'\d*_\d*', i['gNomen']).group()
+            start, end = start_end.split('_')
+            cnv['start'] = start
+            cnv['end'] = end
+        else: 
+            start = int(''.join(re.findall('([0-9])', i['gNomen'])))
+            cnv['start'] = start
+            cnv['end'] = start 
+    else:
+        cnv['variant_class'] = 'Duplication'
+
+    if re.match('homozygous$', i['Phenotype'], flags=re.I):
+        cnv['genotype'] = 'Homozygous'
+    elif re.match('homozygous$', i['Comment'], flags=re.I):
+        cnv['genotype'] = 'Homozygous'
+    else:
+        cnv['genotype'] = 'Heterozygous' 
+
+    classification = i['Class']
+    if classification == 'Class 3-Unknown pathogenicity':
+        cnv['pathogenicity'] = 'Uncertain'
+    elif classification == 'Class 4-Likely pathogenic':
+        cnv['pathogenicity'] = 'Likely pathogenic'
+    elif classification == 'Class 5-Certainly pathogenic':
+        cnv['pathogenicity'] = 'Pathogenic'
+
+    # Creating JSON
+    cnvdata = json.dumps([cnv])
+    # Posting SNV
+    response = POST(cnv_url, keys, cnvdata)
+    # Extracting the SNV_id and adding them to a list.
+    JSONcnv = response.json()
+    id_cnv = (JSONcnv[0]['patient_cnv_id'])
+    cnv_ids.append(id_cnv)
 
 
