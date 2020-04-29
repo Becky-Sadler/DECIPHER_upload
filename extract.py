@@ -176,3 +176,26 @@ for index, row in df.iterrows():
         df.drop(index, inplace = True)
 
 df.to_csv('test.csv', index=False)
+
+known = [tuple()]
+with open('MYH7_chop_no_other.csv') as csvfile:
+    reader = csv.DictReader(csvfile, delimiter = ',')
+    dicts = list(reader)
+    print('Known: ' + str(len(dicts)))
+    for line in dicts:
+        known.append((line['PatientID'], line['FamilyID']))
+
+filtered = [tuple()]
+with open('test.csv') as csvfile:
+    reader = csv.DictReader(csvfile, delimiter = ',')
+    dicts = list(reader)
+    print('Filtered: ' + str(len(dicts)))
+    for line in dicts:
+        filtered.append((line['PatientID'], line['FamilyID']))
+
+check = [x for x in known if x not in filtered]
+print(check)
+
+print('--------------------------------------------------------------------------------')
+check1 = [x for x in filtered if x not in known]
+print(check1)
