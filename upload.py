@@ -8,15 +8,6 @@ import csv
 
 # creating a header variable with the authentication and content_type information - does not need to be repeated as it is uniform
 
-# Formatting of the reference value
-
-with open('reference.txt','r+') as f:
-    lines = f.readlines()
-    number = int(lines[0])
-    reference = lines[1].strip() + lines[0].strip()
-    f.seek(0)
-    f.write(str(number + 1))
-
 config = yaml.safe_load(open("DECIPHER_config.yml"))
  
 system_key = (config['X-Auth-Token-System'])
@@ -29,31 +20,34 @@ keys = {
     'Content-Type': 'application/json',
 }
 
+# GET request
+
 def GET(url, header):
-	response = requests.get(url, headers=header)
-	if response.status_code ==200:
-		return response
-	else: 
-		print(response.content)
+    response = requests.get(url, headers=header)
+    if response.status_code ==200:
+        return response
+    else: 
+        print(response.content)
 
 # POST request
 
 def POST(url, header, data):
-	try:
-		response = requests.post(url, headers=header, data=data)
-		response.raise_for_status()
-	except HTTPError as err:
-		print("Error: {0}".format(err))
-	if response.status_code ==200:
-		return response
-	else:
-		print(response.content)
+    try:
+        response = requests.post(url, headers=header, data=data)
+        response.raise_for_status()
+    except HTTPError as err:
+        print("Error: {0}".format(err))
+    if response.status_code ==200:
+        return response
+    else:
+        print(response.content)
+
 
 # URL function 
 
 def URL(path):
-	url = 'https://decipher.sanger.ac.uk/API' + path
-	return url
+    url = 'https://decipher.sanger.ac.uk/API' + path
+    return url 
 
 # Getting project code from info endpoint 
 url = URL('/info')
@@ -63,11 +57,20 @@ response = GET(url, keys)
 project = response.json()
 project_id = (project['user']['project']['project_id'])
 
-# creation of patient dictionary
+# Formatting of the reference value
+
+with open('reference.txt','r+') as f:
+    lines = f.readlines()
+    number = int(lines[0])
+    reference = lines[1].strip() + lines[0].strip()
+    f.seek(0)
+    f.write(str(number + 1))
+
+# Creation of a patient dictionary containing all the required fields 
 patient = {}
 patient['project_id'] = project_id
 patient['sex'] = 'unknown'
-patient['reference'] = reference
+patient['reference'] = reference 
 
 # Creating the patient on DECIPHER - first URL is assigned.
 url = URL('/projects/{0}/patients'.format(project_id))
@@ -75,14 +78,14 @@ url = URL('/projects/{0}/patients'.format(project_id))
 # Dictionary is converted to JSON - need to put [] around the dictionary so the resulting json is in the right format.
 patientdata = json.dumps([patient])
 
-# Patient is created within DECIPHER
+# Patient is created within DECIPHER & the patients_id is found 
 response = POST(url, keys, patientdata)
 
 patient = response.json()
 patients_id = (patient[0]['patient_id'])
 
 # Turn each row of the csv file into a dictionary
-with open('test.csv') as csvfile:
+with open('short.csv') as csvfile:
     reader = csv.DictReader(csvfile, delimiter = ",")
     dicts = list(reader) 
 
@@ -133,17 +136,16 @@ for i in filtered_snv:
     snv['user_transcript'] = i['Transcript']
 
     classification = i['Classification']
-    if classification == '3':        
+    if classification == '3':
         snv['pathogenicity'] = 'Uncertain'
-    elif classification == '4': 
+    elif classification == '4':
         snv['pathogenicity'] = 'Likely pathogenic'
     elif classification == '5':
         snv['pathogenicity'] = 'Pathogenic'
-
-	# Creating JSON
+    
+    # Creating JSON
     snvdata = json.dumps([snv])
-
-	# Posting SNV
+    # Posting SNV
     response = POST(snv_url, keys, snvdata)
     # Extracting the SNV_id and adding them to a list. 
     JSONsnv = response.json()
@@ -155,7 +157,7 @@ for i in filtered_cnv:
     cnv = {}
     cnv['patient_id'] = patients_id
     cnv['chr'] = i['Chrom']
-
+    
     if i['Assembly'] == 'GRCh37':
         cnv['assembly'] = 'GRCh37/hg19'
     elif i['Assembly'] == 'GRCh38':
@@ -171,7 +173,7 @@ for i in filtered_cnv:
         cnv['genotype'] = 'Homozygous'
     else:
         cnv['genotype'] = 'Heterozygous' 
-
+    
     classification = i['Classification']
     if classification == '3':
         cnv['pathogenicity'] = 'Uncertain'
@@ -182,11 +184,9 @@ for i in filtered_cnv:
 
     # Creating JSON
     cnvdata = json.dumps([cnv])
-    # Posting CNV
+    # Posting SNV
     response = POST(cnv_url, keys, cnvdata)
-    # Extracting the CNV_id and adding them to a list.
+    # Extracting the SNV_id and adding them to a list.
     JSONcnv = response.json()
     id_cnv = (JSONcnv[0]['patient_cnv_id'])
     cnv_ids.append(id_cnv)
-
-
