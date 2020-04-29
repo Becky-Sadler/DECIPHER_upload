@@ -89,6 +89,9 @@ with open('test.csv') as csvfile:
 # Filter out the class1 and 2 variants (do not need to be uploaded) 
 filtered = list(filter(lambda i: i['Class'] != ('Class 2-Unlikely pathogenic' or 'Class 1-Certainly not pathogenic') , dicts)) 
 
+# Creating the patient on DECIPHER - first URL is assigned and then used for the POST request.
+url = URL('/patients/{0}/snvs'.format(patients_id))
+
 # Pull out the relevant information from the dictionaries into JSON for upload. 
 for i in filtered: 
     snv = {}
@@ -127,13 +130,9 @@ for i in filtered:
         pathogenicity = 'Pathogenic' 
 
 	# Creating JSON
-	snvdata = json.dumps(snv)
-    print(snvdata)
-    print(url)
+    snvdata = json.dumps([snv])
 
 	# Posting SNV
-    # Creating the patient on DECIPHER - first URL is assigned and then used for the POST request.
-    url = URL('/projects/{0}/patients'.format(project_id))
     response = POST(url, keys, snvdata)
     # Extracting the SNV_id and adding them to a list. 
     #snv_ids = []
