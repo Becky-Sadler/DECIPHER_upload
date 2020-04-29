@@ -33,13 +33,21 @@ for member in root.findall('Mutation'):
 
     vartype = member.find('Variant').attrib['type']
     print(vartype)
-    position = member.find('Variant').attrib['pos']
-    print(position)
-    refallele = member.find('Variant').attrib['baseFrom']
-    print(refallele)
-    altallele = member.find('Variant').attrib['baseTo']
-    print(altallele)
+    if vartype == 'Substitution':
+	    position = member.find('Variant').attrib['pos']
+	    print(position)
+	    refallele = member.find('Variant').attrib['baseFrom']
+	    print(refallele)
+	    altallele = member.find('Variant').attrib['baseTo']
+	    print(altallele)
 
+    elif vartype == 'Deletion':
+		start = member.find('Variant').attrib['from']
+		print(start)
+		end = member.find('Variant').attrib['to']
+		print(end)
+	# elif ... 
+	
     transcript = member.find('Variant/Nomenclature').attrib['refSeq']
     print(transcript)
     classification = member.find('Classification').attrib['index']
