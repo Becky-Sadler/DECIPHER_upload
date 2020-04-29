@@ -46,13 +46,28 @@ for member in root.findall('Mutation'):
     print(classification)
 
     for child in member.findall('Occurrences/Occurrence'):
-        patientID = child.find('Patient').text
-        print(patientID)
-        familyID = child.find('Family').text
-        print(familyID)
-        rawphenotype = child.find('Phenotype').text
-        phenotype = cleanhtml(rawphenotype)
-        print(phenotype.encode("utf-8"))
-        rawcomment = child.find('Comment').text
-        comment = cleanhtml(rawcomment)
-        print(comment)
+        if child.find('Patient').text != None:
+        	patientID = child.find('Patient').text
+        	print(patientID)
+        else: 
+        	print('Empty Field')
+
+        if child.find('Family').text != None:
+        	familyID = child.find('Family').text
+        	print(familyID)
+        else: 
+        	print('Empty Field')
+
+        if child.find('Phenotype').text != None:
+        	rawphenotype = child.find('Phenotype').text
+        	phenotype = cleanhtml(rawphenotype)
+        	print(phenotype)
+        else: 
+        	print('Empty Field')
+
+        if child.find('Comment').text != None:
+        	rawcomment = child.find('Comment').text
+	        comment = cleanhtml(rawcomment)
+	        print(comment)
+        else: 
+        	print('Empty Field')
