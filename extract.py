@@ -136,9 +136,17 @@ with open(csvname) as csvfile:
 # Matches patientIDs using separate regexes and or statements(|) (initials followed by ( or space | O number | Location | (initials) | initials on their own. 
 patient_identifiers = re.compile(r'^([A-Z]{1,3}[ \(])|(O\d+)|(\d*[A-Z](\d){1,2})|^[\( ]([A-Z])+[\) ]$|^([A-Z]){1,3}$')
 remove_journal = re.compile(r'^((?!et al).)*$')
+family_id = re.compile(r'(CAR[\d]{1,5})|(GEN[\d]{1,5})| (\d){1,5}')
+
+for line in dicts:
+	print(line['FamilyID'])
 
 for line in dicts:
 	z = re.match(patient_identifiers, line['PatientID'])
 	x = re.match(remove_journal, line['PatientID'])
+	y = re.match(family_id, line['FamilyID'])
 	if z and x:
-		print(line['PatientID'])
+		print(line['PatientID'] + ' ' + line['FamilyID'])
+	elif y:
+		print(line['PatientID'] + ' ' + line['FamilyID'])
+
