@@ -147,10 +147,10 @@ Onumber_loc = re.compile(r'(\d{1,4}[A-Ha-h](\d){1,2})|([O0o]\d{7})')
 # Matches initials 
 initials = re.compile(r'([A-Z]{2,5} )|([A-Z]{1,2}[a-z][A-Z]{1,2} )|([A-Z]{2}\'[A-Z] )|([A-Z]{1,2}-[A-Z]{1,2} )|([A-Z]{2}[a-z][A-Z]{0,1} )|^([A-Z]{2})|([A-Z]{1-4}\()')
 # Matches patientIDs that contain the words in the list searchlist. 
-searchlist = ['et al', '[Rr][Ee][Vv][Ii][Ee][Ww]', '[Cc][Oo][Nn][Tt][Rr][Oo][Ll]', 'LOVD', 'HCMR', 'NCBI', 'HCM', '[iI]nvestigation', 'Reclassification', 'ClinVar', 'HGMD', 'ARVC', 'dbSNP', 'ExAC', 'gnomAD', 'TOPMED', 'WTCHG', 'NEQAS', 'E[VS][SP]', '(rs\d+)']
+searchlist = ['et al', '[Rr][Ee][Vv][Ii][Ee][Ww]', '[Cc][Oo][Nn][Tt][Rr][Oo][Ll]', 'LOVD', 'HCMR', 'NCBI', 'mix up', 'HCM', '[iI]nvestigation', 'Reclassification', 'ClinVar', 'HGMD', 'ARVC', 'dbSNP', 'ExAC', 'gnomAD', 'TOPMED', 'WTCHG', 'NEQAS', 'E[VS][SP]', '(rs\d+)']
 words = re.compile("|".join(searchlist))
 # Matches family_IDs (CAR/GEN)
-family_id = re.compile(r'(CAR[\d]{1,5})|(GEN[\d]{1,5})|(^\d{1,4}$)')
+family_id = re.compile(r'(CAR[\d]{1,5})|(GEN[\d]{1,5})|(^\d{1,4}$)|(^\d{1,4}[\( ])|(,\d{1,5})')
 
 collected = [tuple()]
 missing = [tuple()]
@@ -162,16 +162,17 @@ with open(csvname) as csvfile:
     for line in dicts:
         patient = re.match(initials, line['PatientID'])
         identifiers = re.search(Onumber_loc, line['PatientID'])
-        family = re.match(family_id, str(line['FamilyID']))
+        family = re.match(family_id, (line['FamilyID']))
         remove = re.search(words, line['PatientID'])
-        if line['PatientID'] == '':
+        if line['PatientID'] == '' or line['PatientID'] is None:
+            print(line['PatientID'] + line['FamilyID'])            
             if family:
                 collected.append((line['PatientID'], line['FamilyID']))
         elif patient or identifiers:
             if remove:
                 missing.append((line['PatientID'], line['FamilyID']))
             else:
-                collected.append((line['PatientID'], line['FamilyID']))     
+                collected.append((line['PatientID'], line['FamilyID']))  
         else:
             missing.append((line['PatientID'], line['FamilyID']))
 
@@ -189,5 +190,7 @@ print(collected)
 check = [x for x in known if x not in collected]
 print(check)
 
+print('--------------------------------------------------------------------------------')
+
 check1 = [x for x in collected if x not in known]
-#print(check1)
+print(check1)
