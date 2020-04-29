@@ -81,56 +81,7 @@ response = POST(url, keys, patientdata)
 patient = response.json()
 patients_id = (patient[0]['patient_id'])
 
-# creation of snv dictionary 
-
-''' data = pd.read_csv('test.csv')
-
-for row in data.iterrows():
-    snv = {}
-    snv['patient_id'] = patients_id
-    snv['assembly'] = data['Assembly']
-    snv['chr'] = int(data['Chrom'])
-
-    genomicstart = data['gNomen']
-    splitstart = re.findall("([0-9])", genomicstart)
-    start = int(''.join(splitstart))
-    snv['start'] = start
-
-    alleles = data['gNomen']
-    allelelist = [i for i, c in enumerate(alleles) if c.isupper()]
-    ref_allele = alleles[allelelist[0]]
-    alt_allele = alleles[allelelist[1]]
-    snv['ref_allele'] = ref_allele
-    snv['alt_allele'] = alt_allele
-
-    if re.match("homozygous$", data['Phenotype'], flags=re.I): #re.I == ignorecase
-        genotype = 'Homozygous'
-    elif re.match("homozygous$", data['Comment'], flags=re.I):
-        genotype = 'Homozygous'
-    else:
-        genotype = 'Heterozygous'
-    snv['genotype'] = genotype
-
-    snv['user_transcript'] = data['Transcript']
-
-    classification = data['Class']
-    if classification == 'Class 3-Unknown pathogenicity':
-        pathogenicity = 'Uncertain'
-    elif classification == 'Class 4-Likely pathogenic':
-        pathogenicity = 'Likely pathogenic'
-    elif classification == 'Class 5-Certainly pathogenic':
-        pathogenicity = 'Pathogenic' 
-
-# Test here to make sure that no class 1 or 2 are being made into dictionaries for upload? 
-snv['pathogenicity'] = pathogenicity 
-
-snvdata = json.dumps([snv])
-
-print(snvdata) '''
-
-
 # Turn each row of the csv file into a dictionary
-
 with open('test.csv') as csvfile:
     reader = csv.DictReader(csvfile, delimiter = ",")
     dicts = list(reader) 
@@ -138,5 +89,47 @@ with open('test.csv') as csvfile:
 # Filter out the class1 and 2 variants (do not need to be uploaded) 
 filtered = list(filter(lambda i: i['Class'] != ('Class 2-Unlikely pathogenic' or 'Class 1-Certainly not pathogenic') , dicts)) 
 
-# Pull out the relevant information from the dictionaries into JSON for upload and upload. 
+# In preparation of upload of the snv data, assign the URL
+
+url = URL('/patients/{0}/snvs'.format(patients_id))
+
+# Pull out the relevant information from the dictionaries into JSON for upload. 
 for i in filtered: 
+    snv = {}
+    snv['patient_id'] = patients_id
+    snv['assembly'] = i['Assembly']
+    snv['chr'] = int(i['Chrom'])
+
+    genomicstart = i['gNomen']
+    splitstart = re.findall("([0-9])", genomicstart)
+    start = int(''.join(splitstart))
+    snv['start'] = start
+
+    alleles = i['gNomen']
+    allelelist = [i for i, c in enumerate(alleles) if c.isupper()]
+    ref_allele = alleles[allelelist[0]]
+    alt_allele = alleles[allelelist[1]]
+    snv['ref_allele'] = ref_allele
+    snv['alt_allele'] = alt_allele
+
+    if re.match("homozygous$", i['Phenotype'], flags=re.I): #re.I == ignorecase
+        genotype = 'Homozygous'
+    elif re.match("homozygous$", i['Comment'], flags=re.I):
+        genotype = 'Homozygous'
+    else:
+        genotype = 'Heterozygous'
+    snv['genotype'] = genotype
+
+    snv['user_transcript'] = i['Transcript']
+
+    classification = i['Class']
+    if classification == 'Class 3-Unknown pathogenicity':
+        pathogenicity = 'Uncertain'
+    elif classification == 'Class 4-Likely pathogenic':
+        pathogenicity = 'Likely pathogenic'
+    elif classification == 'Class 5-Certainly pathogenic':
+        pathogenicity = 'Pathogenic' 
+
+snvdata = json.dumps([snv])
+
+print(snvdata) 
