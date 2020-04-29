@@ -137,9 +137,9 @@ with open(csvname,"r",encoding="utf-8") as f:
      data = list(reader)
      row_count = len(data) 
 if row_count == (count +1):
-	print('Number of rows in csv file matches number of occurances looped through')
+	continue
 else:
-	print('The count is ' + str(count + 1) + ' the number of lines in the csv file is ' + str(lines))
+	print('The number of occurences does not match the number recorded in the csv. The count is ' + str(count + 1) + ' the number of lines in the csv file is ' + str(lines))
 
 # Matches patientIDs using separate regexes and or statements(|) (initials followed by ( or space | O number | Location | (initials) | initials on their own. 
 patient_identifiers = re.compile(r'^([A-Z]{1,4}[ \(])|(O\d+)|(\d*[A-Z](\d){1,2})|^[\( ]([A-Z])+[\) ]$|^([A-Z]){1,4}$')
