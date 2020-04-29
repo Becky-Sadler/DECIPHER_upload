@@ -156,27 +156,39 @@ family_id = re.compile(r'(CAR[\d]{1,5})|(GEN[\d]{1,5})|(^\d{1,4}$)|(^\d{1,4}[\( 
 # Opening the CSV file as a dataframe using pandas
 df = pd.read_csv(csvname)
 
+#Loop through df
 for index, row in df.iterrows():
+	#checking if the patientID/familyID match the different regexes
     patient = re.match(initials, str(row['PatientID']))
     identifiers = re.search(Onumber_loc, str(row['PatientID']))
     family = re.match(family_id, str(row['FamilyID']))
     remove = re.search(words, str(row['PatientID']))
+    # If PatientID AND FamilyID are null drop that row from the dataframe
     if (pd.isnull(row['PatientID'])) & (pd.isnull(row['FamilyID'])):
         df.drop(index, inplace = True)
+    # If the initials or location/O number are present
     elif patient or identifiers:
+            # If it also matches remove (Common words that signal not a patient) drop the row. If not present continue the loop.
             if remove:
                 df.drop(index, inplace = True)
             else:
                 continue  
+    # If patientId is empty or null and there is something that represents a familyID in the FamilyId column continue. If not then drop the row
     elif row['PatientID'] == '' or pd.isnull(row['PatientID']):
         if family:
                 continue
         else:
             df.drop(index, inplace = True)
+     #If none of the conditions are met drop the row (i.e no patient identifiers are detected)
     else: 
         df.drop(index, inplace = True)
 
 df.to_csv('filtered_{}.csv'.format(gene), index=False)
+
+''' 
+    Check between the filtered csv and a csv that I manually went through and deleted non-patient records. This is used to verify that the programme
+    is extracting the correct rows from the complete csv. 
+    '''
 
 known = [tuple()]
 with open('{}_chop_no_other.csv'.format(gene)) as csvfile:
