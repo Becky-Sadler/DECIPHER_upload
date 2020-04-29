@@ -1,20 +1,26 @@
 import xml.etree.ElementTree as ET
 import csv
 import re
+import os
+import sys
 
 def cleanhtml(raw_html):
+# removing the formatting and one line that I couldn't figure out a regex for)
   rem_html = re.compile(r'<.*?>')
   rem_other = re.compile(r'p, li { white-space: pre-wrap; }')
   clean = rem_html.sub('', raw_html)
   clean_text = (rem_other.sub('', clean)).replace('\n', ' ').replace('\r', '')
   return clean_text
 
-tree = ET.parse('MYH7.mut')
+alamut_file = 'MYH7.mut'
+tree = ET.parse(alamut_file)
 root = tree.getroot()
 
-# open a file (in a temporary directory) to write the data into.
+# open a file to write the data into - the csv file is named after the gene file using the filename from alamut_file
 
-extract_data = open('/tmp/extract_data.csv', 'w')
+filename, extension = os.path.splitext(alamut_file)
+csvname = '{0}.csv'.format(filename)
+extract_data = open(csvname, 'wt')
 
 # create csv writer object 
 
