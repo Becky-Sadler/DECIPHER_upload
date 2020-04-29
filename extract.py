@@ -188,7 +188,7 @@ for filepath in glob.iglob('*.mut'):
 
 '''
 known = [tuple()]
-with open('{}_chop_no_other.csv'.format(gene)) as csvfile:
+with open('test_csvs/{}_chopped.csv'.format(gene)) as csvfile:
     reader = csv.DictReader(csvfile, delimiter = ',')
     dicts = list(reader)
     print('Known: ' + str(len(dicts)))
