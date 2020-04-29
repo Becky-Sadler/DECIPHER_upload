@@ -134,6 +134,8 @@ for i in filtered:
     elif classification == 'Class 5-Certainly pathogenic':
         pathogenicity = 'Pathogenic' 
 
+    snv['pathogenicity'] = pathogenicity
+
 	# Creating JSON
     snvdata = json.dumps([snv])
 
