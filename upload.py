@@ -128,12 +128,15 @@ snvdata = json.dumps([snv])
 
 print(snvdata) '''
 
+
+# Turn each row of the csv file into a dictionary
+
 with open('test.csv') as csvfile:
     reader = csv.DictReader(csvfile, delimiter = ",")
     dicts = list(reader) 
 
-for x in dicts:
-    if x['Class'] == 'Class 2-Unlikely pathogenic' or 'Class 1-Certainly not pathogenic':
-        dicts.remove(x)
+# Filter out the class1 and 2 variants (do not need to be uploaded) 
+filtered = list(filter(lambda i: i['Class'] != ('Class 2-Unlikely pathogenic' or 'Class 1-Certainly not pathogenic') , dicts)) 
 
-print(dicts)
+# Pull out the relevant information from the dictionaries into JSON for upload and upload. 
+for i in filtered: 
