@@ -96,7 +96,12 @@ url = URL('/patients/{0}/snvs'.format(patients_id))
 for i in filtered: 
     snv = {}
     snv['patient_id'] = patients_id
-    snv['assembly'] = i['Assembly']
+
+    if i['Assembly'] == 'GRCh37':
+        snv['assembly'] = 'GRCh37/hg19'
+    elif i['Assembly'] == 'GRCh38':
+        snv['assembly'] = 'GRCh38'
+
     snv['chr'] = i['Chrom']
 
     genomicstart = i['gNomen']
