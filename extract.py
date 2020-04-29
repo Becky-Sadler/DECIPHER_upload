@@ -67,7 +67,18 @@ for member in root.findall('Mutation'):
 
     transcript = member.find('Variant/Nomenclature').attrib['refSeq']
     #print(transcript)
-    classification = member.find('Classification').attrib['index']
+    
+    # creating a loop that ensures any variants that are classified on the old system are correctly converted to the 5 ranking system. 
+    if member.find('Classification').attrib['val'] == "CMGS_VGKL_5":
+    	classification = member.find('Classification').attrib['index']
+    else:
+    	if member.find('Classification').attrib['index'] == 1:
+    		classification = 1
+    	elif member.find('Classification').attrib['val'] == 2:
+    		classification = 3
+    	elif member.find('Classification').attrib['val'] == 3:
+    		classification = 5  
+
     #print(classification)
 
     for child in member.findall('Occurrences/Occurrence'):
