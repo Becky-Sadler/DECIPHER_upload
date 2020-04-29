@@ -13,7 +13,8 @@ def cleanhtml(raw_html):
   clean_text = (rem_other.sub('', clean)).replace('\n', ' ').replace('\r', '')
   return clean_text
 
-alamut_file = 'MYH7.mut'
+gene = 'MYH7'
+alamut_file = '{}.mut'.format(gene)
 tree = ET.parse(alamut_file)
 root = tree.getroot()
 
@@ -145,9 +146,9 @@ else:
 # Matches patientIDs using separate regexes and or statements(|)  
 Onumber_loc = re.compile(r'(\d{1,4}[A-Ha-h](\d){1,2})|([O0o]\d{7})')
 # Matches initials 
-initials = re.compile(r'([A-Z]{2,5} )|([A-Z]{1,2}[a-z][A-Z]{1,2} )|([A-Z]{2}\'[A-Z] )|([A-Z]{1,2}-[A-Z]{1,2} )|([A-Z]{2}[a-z][A-Z]{0,1} )|^([A-Z]{2})|([A-Z]{1-4}\()')
+initials = re.compile(r'([A-Z]{2,5} )|([A-Z]{1,2}[a-z][A-Z]{1,2} )|([A-Z]{2}\'[A-Z] )|([A-Z]{1,2}[-.][A-Z]{1,2})|([A-Z]{2}[a-z][A-Z]{0,1} )|^([A-Z]{2})|([A-Z]{1-4}\()')
 # Matches patientIDs that contain the words in the list searchlist. 
-searchlist = ['et al', '[Rr][Ee][Vv][Ii][Ee][Ww]', '[Cc][Oo][Nn][Tt][Rr][Oo][Ll]', 'LOVD', 'HCMR', 'NCBI', 'mix up', 'HCM', '[iI]nvestigation', 'Reclassification', 'ClinVar', 'HGMD', 'ARVC', 'dbSNP', 'ExAC', 'gnomAD', 'TOPMED', 'WTCHG', 'NEQAS', 'E[VS][SP]', '(rs\d+)']
+searchlist = ['et al', '[Rr][Ee][Vv][Ii][Ee][Ww]', 'OR calc', '[Cc][Oo][Nn][Tt][Rr][Oo][Ll]', 'OMGL', 'LOVD', 'HCMR', 'NCBI', 'mix up', 'HCM', '[iI]nvestigation', 'BRC', '[Rr][Nn][Aa]', 'Reclassification', 'GENQA', 'ClinVar', 'HGMD', 'ARVC', 'dbSNP', 'ExAC', 'NHLBI', 'gnomAD', 'TOPMED', 'WTCHG', 'NEQAS', 'E[VS][SP]', '(rs[\d ]\d+)']
 words = re.compile("|".join(searchlist))
 # Matches family_IDs (CAR/GEN/Number assortment)
 family_id = re.compile(r'(CAR[\d]{1,5})|(GEN[\d]{1,5})|(^\d{1,4}$)|(^\d{1,4}[\( ])|(,\d{1,5})')
@@ -175,18 +176,21 @@ for index, row in df.iterrows():
     else: 
         df.drop(index, inplace = True)
 
-df.to_csv('test.csv', index=False)
+df.to_csv('filtered_{}.csv'.format(gene), index=False)
 
 known = [tuple()]
-with open('MYH7_chop_no_other.csv') as csvfile:
+with open('{}_chop_no_other.csv'.format(gene)) as csvfile:
     reader = csv.DictReader(csvfile, delimiter = ',')
     dicts = list(reader)
     print('Known: ' + str(len(dicts)))
     for line in dicts:
-        known.append((line['PatientID'], line['FamilyID']))
+        if line['PatientID'] == '' and line['FamilyID'] == '':
+            continue
+        else:
+            known.append((line['PatientID'], line['FamilyID']))
 
 filtered = [tuple()]
-with open('test.csv') as csvfile:
+with open('filtered_{}.csv'.format(gene)) as csvfile:
     reader = csv.DictReader(csvfile, delimiter = ',')
     dicts = list(reader)
     print('Filtered: ' + str(len(dicts)))
