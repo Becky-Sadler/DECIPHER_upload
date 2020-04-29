@@ -118,4 +118,13 @@ for member in root.findall('Mutation'):
 
 # Add a test that checks the number of rows = the expected count??? 
 
-extract_data.close() 
+extract_data.close()
+
+
+# Test to ensure the number of lines in the csv file matches the number of occurances. 
+lines = sum(1 for row in open(csvname))
+if lines == (count +1):
+	print('Number of rows in csv file matches number of occurances looped through')
+else:
+	print('The count is ' + str(count + 1) + ' the number of lines in the csv file is ' + str(lines))
+	 
