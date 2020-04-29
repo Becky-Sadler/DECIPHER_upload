@@ -111,6 +111,16 @@ snv['genotype'] = genotype
 
 snv['user_transcript'] = data['Transcript'][0] 
 
+classification = data['Class'][0]
+if classification == 'Class 3-Unknown pathogenicity':
+    pathogenicity = 'Uncertain'
+elif classification == 'Class 4-Likely pathogenic':
+    pathogenicity = 'Likely pathogenic'
+elif classification == 'Class 5-Certainly pathogenic':
+    pathogenicity = 'Pathogenic' 
+# Test here to make sure that no class 1 or 2 are being made into dictionaries for upload? 
+snv['pathogenicity'] = pathogenicity 
+
 snvdata = json.dumps([snv])
 
 print(snvdata)
