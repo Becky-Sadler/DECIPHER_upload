@@ -148,10 +148,10 @@ Onumber_loc = re.compile(r'(\d{1,4}[A-Ha-h](\d){1,2})|([O0o]\d{7})')
 # Matches initials 
 initials = re.compile(r'([A-Z]{2,5} )|([A-Z]{1,2}[a-z][A-Z]{1,2} )|([A-Z]{2}\'[A-Z] )|([A-Z]{1,2}[-.][A-Z]{1,2})|([A-Z]{2}[a-z][A-Z]{0,1} )|^([A-Z]{2})|([A-Z]{1-4}\()')
 # Matches patientIDs that contain the words in the list searchlist. 
-searchlist = ['et al', '[Rr][Ee][Vv][Ii][Ee][Ww]', 'OR calc', '[Cc][Oo][Nn][Tt][Rr][Oo][Ll]', 'OMGL', 'LOVD', 'HCMR', 'NCBI', 'mix up', 'HCM', '[iI]nvestigation', 'BRC', '[Rr][Nn][Aa]', 'Reclassification', 'GENQA', 'ClinVar', 'HGMD', 'ARVC', 'dbSNP', 'ExAC', 'NHLBI', 'gnomAD', 'TOPMED', 'WTCHG', 'NEQAS', 'E[VS][SP]', '(rs[\d ]\d+)']
+searchlist = ['et al', '[Rr][Ee][Vv][Ii][Ee][Ww]', 'OR calc', '[Cc][Oo][Nn][Tt][Rr][Oo][Ll]', 'LOVD', 'OMGL', 'NCBI', 'mix up', '[iI]nvestigation', 'GEL', '[Rr][Nn][Aa]', 'Reclassification', 'GENQA', 'ClinVar', 'HGMD', 'ARVC', 'dbSNP', 'ExAC', 'NHLBI', 'gnomAD', 'TOPMED', 'WTCHG', 'NEQAS', 'E[VS][SP]', '(rs[\d ]\d+)']
 words = re.compile("|".join(searchlist))
 # Matches family_IDs (CAR/GEN/Number assortment)
-family_id = re.compile(r'(CAR[\d]{1,5})|(GEN[\d]{1,5})|(^\d{1,4}$)|(^\d{1,4}[\( ])|(,\d{1,5})')
+family_id = re.compile(r'(CAR[\d]{1,5})|(GEN[\d]{1,5})|(^\d{1,4}$)|(^\d{1,4}[\( ])|(\d{1,2},\d{1,5})')
 
 # Opening the CSV file as a dataframe using pandas
 df = pd.read_csv(csvname)
@@ -185,11 +185,11 @@ for index, row in df.iterrows():
 
 df.to_csv('filtered_{}.csv'.format(gene), index=False)
 
-''' 
-    Check between the filtered csv and a csv that I manually went through and deleted non-patient records. This is used to verify that the programme
+''' Check between the filtered csv and a csv that I manually went through and deleted non-patient records. This is used to verify that the programme
     is extracting the correct rows from the complete csv. 
     '''
 
+'''
 known = [tuple()]
 with open('{}_chop_no_other.csv'.format(gene)) as csvfile:
     reader = csv.DictReader(csvfile, delimiter = ',')
@@ -214,4 +214,4 @@ print(check)
 
 print('--------------------------------------------------------------------------------')
 check1 = [x for x in filtered if x not in known]
-print(check1)
+print(check1) '''
