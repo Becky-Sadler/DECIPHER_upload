@@ -142,14 +142,15 @@ if row_count == (count +1):
 else:
 	print('The number of occurences does not match the number recorded in the csv. The count is ' + str(count + 1) + ' the number of lines in the csv file is ' + str(lines))
 
-# Matches patientIDs using separate regexes and or statements(|) (initials followed by ( or space | O number | Location | (initials) | initials on their own. 
-#patient_identifiers = re.compile(r'^([A-Z]{1,4}[ \(])|([O, 0]\d+)|(\d*[A-Z](\d){1,2})|^[\( ]([A-Z])+[\) ]$|^([A-Z]){1,4}$')
-patient_identifiers = re.compile(r'([O0]\d{7})|(\d*[A-Z]{1}(\d){1,2})|([A-Z]){1,4}$')
+# Matches patientIDs using separate regexes and or statements(|)  
+Onumber_loc = re.compile(r'(\d{1,4}[A-Ha-h](\d){1,2})|([O0o]\d{7})')
+# Matches initials 
+initials = re.compile(r'([A-Z]{2,5} )|([A-Z]{1,2}[a-z][A-Z]{1,2})|([A-Z]{2}\'[A-Z])|([A-Z]{1,2}-[A-Z]{1,2})|([A-Z]{2}[a-z][A-Z]{0,1})|^([A-Z]{2})')
 # Matches patientIDs that contain the words in the list searchlist. 
-searchlist = ['et al', '[Rr]eview', 'LOVD', 'HCMR', 'E[A-Z]{1,2}', 'NCBI', '[iI]nvestigation', 'HCM', 'Reclassification', 'ClinVar', 'HGMD', 'PARE', 'ARVC', 'dbSNP', 'ExAC', 'gnomAD', 'TOPMED']
+searchlist = ['et al', '[Rr]eview', 'LOVD', 'HCMR', 'NCBI', '[iI]nvestigation', 'HCM', 'Reclassification', 'ClinVar', 'HGMD', 'PARE', 'ARVC', 'dbSNP', 'ExAC', 'gnomAD', 'TOPMED', 'WTCHG']
 words = re.compile("|".join(searchlist))
 # Matches family_IDs (CAR/GEN)
-family_id = re.compile(r'(CAR[\d]{1,5})|(GEN[\d]{1,5})| (\d){1,5}')
+family_id = re.compile(r'(CAR[\d]{1,5})|(GEN[\d]{1,5})|((\d){1,5})')
 
 collected = [tuple()]
 missing = [tuple()]
@@ -159,30 +160,35 @@ with open(csvname) as csvfile:
     dicts = list(reader)
 
     for line in dicts:
-        patient = re.search(patient_identifiers, line['PatientID'])
+        patient = re.search(initials, line['PatientID'])
+        identifiers = re.search(Onumber_loc, line['PatientID'])
         family = re.match(family_id, line['FamilyID'])
-        remove = re.match(words, line['PatientID'])
-        # Need to redo this
-        if line['PatientID'] == '' and line['FamilyID'] != '':
-            collected.append((line['PatientID'], line['FamilyID']))
-        elif patient or family:
-            if remove:
-                continue
-            else:
+        remove = re.search(words, line['PatientID'])
+        if line['PatientID'] == '':
+            if family:
                 collected.append((line['PatientID'], line['FamilyID']))
-        else:
+        elif remove:
             missing.append((line['PatientID'], line['FamilyID']))
+        else:
+            if patient or identifiers: #or family:
+                collected.append((line['PatientID'], line['FamilyID']))     
+            else:
+                missing.append((line['PatientID'], line['FamilyID']))
 
 known = [tuple()]
-with open('MYH7_chop.csv') as csvfile:
+with open('MYH7_chop_no_other.csv') as csvfile:
     reader = csv.DictReader(csvfile, delimiter = ',')
     dicts = list(reader)
     for line in dicts:
         known.append((line['PatientID'], line['FamilyID']))
 
+#print(collected)
+#print(missing)
+print(len(collected))
+
 
 check = [x for x in known if x not in collected]
-#print(check)
+print(check)
 
 check1 = [x for x in collected if x not in known]
-print(check1)
+#print(check1)
