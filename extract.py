@@ -145,12 +145,12 @@ else:
 # Matches patientIDs using separate regexes and or statements(|)  
 Onumber_loc = re.compile(r'(\d{1,4}[A-Ha-h](\d){1,2})|([O0o]\d{7})')
 # Matches initials 
-initials = re.compile(r'([A-Z]{2,5} )|([A-Z]{1,2}[a-z][A-Z]{1,2})|([A-Z]{2}\'[A-Z])|([A-Z]{1,2}-[A-Z]{1,2})|([A-Z]{2}[a-z][A-Z]{0,1})|^([A-Z]{2})')
+initials = re.compile(r'([A-Z]{2,5} )|([A-Z]{1,2}[a-z][A-Z]{1,2} )|([A-Z]{2}\'[A-Z] )|([A-Z]{1,2}-[A-Z]{1,2} )|([A-Z]{2}[a-z][A-Z]{0,1} )|^([A-Z]{2})|([A-Z]{1-4}\()')
 # Matches patientIDs that contain the words in the list searchlist. 
-searchlist = ['et al', '[Rr]eview', 'LOVD', 'HCMR', 'NCBI', '[iI]nvestigation', 'HCM', 'Reclassification', 'ClinVar', 'HGMD', 'PARE', 'ARVC', 'dbSNP', 'ExAC', 'gnomAD', 'TOPMED', 'WTCHG']
+searchlist = ['et al', '[Rr][Ee][Vv][Ii][Ee][Ww]', '[Cc][Oo][Nn][Tt][Rr][Oo][Ll]', 'LOVD', 'HCMR', 'NCBI', 'HCM', '[iI]nvestigation', 'Reclassification', 'ClinVar', 'HGMD', 'ARVC', 'dbSNP', 'ExAC', 'gnomAD', 'TOPMED', 'WTCHG', 'NEQAS', 'E[VS][SP]', '(rs\d+)']
 words = re.compile("|".join(searchlist))
 # Matches family_IDs (CAR/GEN)
-family_id = re.compile(r'(CAR[\d]{1,5})|(GEN[\d]{1,5})|((\d){1,5})')
+family_id = re.compile(r'(CAR[\d]{1,5})|(GEN[\d]{1,5})|(^\d{1,4}$)')
 
 collected = [tuple()]
 missing = [tuple()]
@@ -160,32 +160,31 @@ with open(csvname) as csvfile:
     dicts = list(reader)
 
     for line in dicts:
-        patient = re.search(initials, line['PatientID'])
+        patient = re.match(initials, line['PatientID'])
         identifiers = re.search(Onumber_loc, line['PatientID'])
-        family = re.match(family_id, line['FamilyID'])
+        family = re.match(family_id, str(line['FamilyID']))
         remove = re.search(words, line['PatientID'])
         if line['PatientID'] == '':
             if family:
                 collected.append((line['PatientID'], line['FamilyID']))
-        elif remove:
-            missing.append((line['PatientID'], line['FamilyID']))
-        else:
-            if patient or identifiers: #or family:
-                collected.append((line['PatientID'], line['FamilyID']))     
-            else:
+        elif patient or identifiers:
+            if remove:
                 missing.append((line['PatientID'], line['FamilyID']))
+            else:
+                collected.append((line['PatientID'], line['FamilyID']))     
+        else:
+            missing.append((line['PatientID'], line['FamilyID']))
 
 known = [tuple()]
 with open('MYH7_chop_no_other.csv') as csvfile:
     reader = csv.DictReader(csvfile, delimiter = ',')
     dicts = list(reader)
+    print(len(dicts))
     for line in dicts:
         known.append((line['PatientID'], line['FamilyID']))
 
-#print(collected)
-#print(missing)
-print(len(collected))
-
+print(count)
+print(collected)
 
 check = [x for x in known if x not in collected]
 print(check)
