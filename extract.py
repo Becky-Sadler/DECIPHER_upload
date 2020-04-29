@@ -48,9 +48,13 @@ for member in root.findall('Mutation'):
     if vartype == 'Substitution':
 	    position = member.find('Variant').attrib['pos']
 	    #print(position)
-	    refallele = member.find('Variant').attrib['baseFrom']
+	    #refallele = member.find('Variant').attrib['baseFrom'] This is the code used to pull the ref and alt allele directly from the XML (not right)
+	    #altallele = member.find('Variant').attrib['baseTo']
+	    nomen = member.find('Variant/gNomen').attrib['val']
+	    allelelist = [i for i, c in enumerate(nomen) if c.isupper()]
+	    refallele = nomen[allelelist[0]]
+	    altallele = nomen[allelelist[1]]
 	    #print(refallele)
-	    altallele = member.find('Variant').attrib['baseTo']
 	    #print(altallele)
 
     elif vartype == 'Deletion' or vartype == 'Duplication':
