@@ -14,78 +14,91 @@ root = tree.getroot()
 
 # open a file (in a temporary directory) to write the data into.
 
-#extract_data = open('/tmp/extract_data.csv', 'w')
+extract_data = open('/tmp/extract_data.csv', 'w')
 
 # create csv writer object 
 
-#csvwriter = csv.writer(extract_data)
-#extract_head = []
+csvwriter = csv.writer(extract_data)
+extract_head = ['Assembly', 'Chrom', 'Gene', 'VarType', 'Pos', 'RefAllele', 'AltAllele', 'Start', 'End', 'Inserted', 'Transcript', 'Classification', 'PatientID', 'FamilyID', 'Phenotype', 'Comment']
 
-#extract_data.close() 
+csvwriter.writerow(extract_head)
 
-variant_list = []
+count = 0
 
 for member in root.findall('Mutation'):
     assembly = member.attrib['refAssembly']
-    print(assembly)
+    #print(assembly)
     chromosome = member.attrib['chr']
-    print(chromosome)
+    #print(chromosome)
     gene = member.attrib['geneSym']
-    print(gene)
+    #print(gene)
 
     vartype = member.find('Variant').attrib['type']
-    variant_list.append(vartype)
-    
+    # print(vartype)
+
+
     if vartype == 'Substitution':
 	    position = member.find('Variant').attrib['pos']
-	    print(position)
+	    #print(position)
 	    refallele = member.find('Variant').attrib['baseFrom']
-	    print(refallele)
+	    #print(refallele)
 	    altallele = member.find('Variant').attrib['baseTo']
-	    print(altallele)
+	    #print(altallele)
 
     elif vartype == 'Deletion' or vartype == 'Duplication':
     	start = member.find('Variant').attrib['from']
-    	print(start)
+    	#print(start)
     	end = member.find('Variant').attrib['to']
-    	print(end)
+    	#print(end)
 
     elif vartype == 'Delins':
     	start = member.find('Variant').attrib['from']
-    	print(start)
+    	#print(start)
     	end = member.find('Variant').attrib['to']
-    	print(end)
+    	#print(end)
     	inserted = member.find('Variant').attrib['inserted']
-    	print(inserted)
+    	#print(inserted)
 
     transcript = member.find('Variant/Nomenclature').attrib['refSeq']
-    print(transcript)
+    #print(transcript)
     classification = member.find('Classification').attrib['index']
-    print(classification)
+    #print(classification)
 
     for child in member.findall('Occurrences/Occurrence'):
         if child.find('Patient').text != None:
         	patientID = child.find('Patient').text
-        	print(patientID)
+        	#print(patientID)
         else: 
-        	print('Empty Field')
+        	patientID = None 
 
         if child.find('Family').text != None:
         	familyID = child.find('Family').text
-        	print(familyID)
+        	#print(familyID)
         else: 
-        	print('Empty Field')
+        	familyID = None 
 
         if child.find('Phenotype').text != None:
         	rawphenotype = child.find('Phenotype').text
         	phenotype = cleanhtml(rawphenotype)
-        	print(phenotype)
+        	#print(phenotype)
         else: 
-        	print('Empty Field')
+        	phenotype = None 
 
         if child.find('Comment').text != None:
         	rawcomment = child.find('Comment').text
 	        comment = cleanhtml(rawcomment)
-	        print(comment)
+	        #print(comment)
         else: 
-        	print('Empty Field')
+        	comment = None 
+
+        if vartype == 'Substitution':
+        	csvwriter.writerow([assembly, chromosome, gene, vartype, position, refallele, altallele, None, None, None, transcript, classification, patientID, familyID, phenotype, comment])
+        elif vartype == 'Deletion' or vartype == 'Duplication':
+        	csvwriter.writerow([assembly, chromosome, gene, vartype, None, None, None, start, end, None, transcript, classification, patientID, familyID, phenotype, comment])
+        elif vartype == 'Delins':
+        	csvwriter.writerow([assembly, chromosome, gene, vartype, None, None, None, start, end, inserted, transcript, classification, patientID, familyID, phenotype, comment])
+        count = count + 1
+
+# Add a test that checks the number of rows = the expected count??? 
+
+extract_data.close() 
