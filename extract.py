@@ -127,4 +127,16 @@ if lines == (count +1):
 	print('Number of rows in csv file matches number of occurances looped through')
 else:
 	print('The count is ' + str(count + 1) + ' the number of lines in the csv file is ' + str(lines))
-	 
+
+
+with open(csvname) as csvfile:
+    reader = csv.DictReader(csvfile, delimiter = ",")
+    dicts = list(reader) 
+
+# Misses initials on their own... 
+patient_identifiers = re.compile(r'([A-Z]+ )|(O\d*)|(\d*[A-Z](\d){1,2})')
+
+for line in dicts:
+	z = re.match(patient_identifiers, line['PatientID'])
+	if z:
+		print(line['PatientID']) 
