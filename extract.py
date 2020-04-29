@@ -149,48 +149,30 @@ initials = re.compile(r'([A-Z]{2,5} )|([A-Z]{1,2}[a-z][A-Z]{1,2} )|([A-Z]{2}\'[A
 # Matches patientIDs that contain the words in the list searchlist. 
 searchlist = ['et al', '[Rr][Ee][Vv][Ii][Ee][Ww]', '[Cc][Oo][Nn][Tt][Rr][Oo][Ll]', 'LOVD', 'HCMR', 'NCBI', 'mix up', 'HCM', '[iI]nvestigation', 'Reclassification', 'ClinVar', 'HGMD', 'ARVC', 'dbSNP', 'ExAC', 'gnomAD', 'TOPMED', 'WTCHG', 'NEQAS', 'E[VS][SP]', '(rs\d+)']
 words = re.compile("|".join(searchlist))
-# Matches family_IDs (CAR/GEN)
+# Matches family_IDs (CAR/GEN/Number assortment)
 family_id = re.compile(r'(CAR[\d]{1,5})|(GEN[\d]{1,5})|(^\d{1,4}$)|(^\d{1,4}[\( ])|(,\d{1,5})')
 
-collected = [tuple()]
-missing = [tuple()]
+# Opening the CSV file as a dataframe using pandas
+df = pd.read_csv(csvname)
 
-with open(csvname) as csvfile:
-    reader = csv.DictReader(csvfile, delimiter = ",") 
-    dicts = list(reader)
-
-    for line in dicts:
-        patient = re.match(initials, line['PatientID'])
-        identifiers = re.search(Onumber_loc, line['PatientID'])
-        family = re.match(family_id, (line['FamilyID']))
-        remove = re.search(words, line['PatientID'])
-        if line['PatientID'] == '' or line['PatientID'] is None:
-            print(line['PatientID'] + line['FamilyID'])            
-            if family:
-                collected.append((line['PatientID'], line['FamilyID']))
-        elif patient or identifiers:
+for index, row in df.iterrows():
+    patient = re.match(initials, str(row['PatientID']))
+    identifiers = re.search(Onumber_loc, str(row['PatientID']))
+    family = re.match(family_id, str(row['FamilyID']))
+    remove = re.search(words, str(row['PatientID']))
+    if (pd.isnull(row['PatientID'])) & (pd.isnull(row['FamilyID'])):
+        df.drop(index, inplace = True)
+    elif patient or identifiers:
             if remove:
-                missing.append((line['PatientID'], line['FamilyID']))
+                df.drop(index, inplace = True)
             else:
-                collected.append((line['PatientID'], line['FamilyID']))  
+                continue  
+    elif row['PatientID'] == '' or pd.isnull(row['PatientID']):
+        if family:
+                continue
         else:
-            missing.append((line['PatientID'], line['FamilyID']))
+            df.drop(index, inplace = True)
+    else: 
+        df.drop(index, inplace = True)
 
-known = [tuple()]
-with open('MYH7_chop_no_other.csv') as csvfile:
-    reader = csv.DictReader(csvfile, delimiter = ',')
-    dicts = list(reader)
-    print(len(dicts))
-    for line in dicts:
-        known.append((line['PatientID'], line['FamilyID']))
-
-print(count)
-print(collected)
-
-check = [x for x in known if x not in collected]
-print(check)
-
-print('--------------------------------------------------------------------------------')
-
-check1 = [x for x in collected if x not in known]
-print(check1)
+df.to_csv('test.csv', index=False)
