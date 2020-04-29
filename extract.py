@@ -3,6 +3,7 @@ import csv
 import re
 import os
 import sys
+import pandas as pd 
 
 def cleanhtml(raw_html):
 # removing the formatting and one line that I couldn't figure out a regex for)
@@ -137,49 +138,10 @@ with open(csvname,"r",encoding="utf-8") as f:
      data = list(reader)
      row_count = len(data) 
 if row_count == (count +1):
-	continue
+	pass
 else:
 	print('The number of occurences does not match the number recorded in the csv. The count is ' + str(count + 1) + ' the number of lines in the csv file is ' + str(lines))
 
-# Matches patientIDs using separate regexes and or statements(|) (initials followed by ( or space | O number | Location | (initials) | initials on their own. 
-patient_identifiers = re.compile(r'^([A-Z]{1,4}[ \(])|(O\d+)|(\d*[A-Z](\d){1,2})|^[\( ]([A-Z])+[\) ]$|^([A-Z]){1,4}$')
-# Matches patientIDs that contain the words in the list searchlist. 
-searchlist = ['et al', '[Rr]eview', 'LOVD', 'HCMR', 'ESP', 'NCBI', '[iI]nvestigation', 'HCM', 'Reclassification', 'ClinVar']
-words = re.compile("|".join(searchlist))
-# Matches family_IDs (CAR/GEN)
-family_id = re.compile(r'(CAR[\d]{1,5})|(GEN[\d]{1,5})| (\d){1,5}')
+df = pd.read_csv('csvname')
 
-with open(csvname) as csvfile:
-    reader = csv.DictReader(csvfile, delimiter = ",") 
-    dicts = list(reader)
-    test_patient = []
-    test_family = []
-
-    for line in dicts:
-    	patient = re.match(patient_identifiers, line['PatientID'])
-    	family = re.match(family_id, line['FamilyID'])
-    	remove = re.match(words, line['PatientID'])
-    	if patient or family:
-		    if remove:
-		    	continue
-		    elif any(val in (None, '') for val in line['PatientID']):
-		    	print(line)
-		    else:
-		    	test_patient.append(line['PatientID'])
-		    	test_family.append(line['FamilyID'])
-
-with open('MYH7_manual_chop.csv') as csvfile:
-	reader = csv.DictReader(csvfile, delimiter = ',')
-	dicts = list(reader)
-	known_patient = []
-	known_family = []
-	for line in dicts:
-		known_patient.append(line['PatientID'])
-		known_family.append(line['FamilyID'])
-
-known = list(zip(known_patient, known_family))
-test = list(zip(test_patient, test_family))
-
-missing = [x for x in known if x not in test]
-print(missing)
-
+print(df)
