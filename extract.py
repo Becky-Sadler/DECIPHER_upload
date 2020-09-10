@@ -74,6 +74,7 @@ for filepath in glob.iglob('*.mut'):
                 if gNomen in str(row['INFO']):
                     refallele = row['REF']
                     altallele = row['ALT']
+                    position = row['POS']
                 else: 
                     print('Please check variant: {0}'.format(gNomen))
             c_nomen= member.find('Variant/Nomenclature/cNomen').attrib['val']
