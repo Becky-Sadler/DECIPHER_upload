@@ -22,13 +22,16 @@ for filepath in glob.iglob('*.mut'):
 
     filename, extension = os.path.splitext(filepath)
     csvname = '{0}.csv'.format(filename)
+
+# Addition of VCF filename - to be used later on to get the ref and alt allele for non-substitution variants.
+    vcfname = '{0}'.vcf.format(filename)
 # if on windows must use 'w' and newline='' rather than 'wb' to stop newlines being added. 
     extract_data = open(csvname, 'w', newline='', encoding='utf-8')
 
     # create csv writer object 
 
     csvwriter = csv.writer(extract_data)
-    extract_head = ['Assembly', 'Chrom', 'Gene', 'VarType', 'Pos', 'RefAllele', 'AltAllele', 'Start', 'End', 'Inserted', 'Transcript', 'Classification', 'PatientID', 'FamilyID', 'Phenotype', 'Comment']
+    extract_head = ['Assembly', 'Chrom', 'Gene', 'VarType', 'Pos', 'RefAllele', 'AltAllele', 'Transcript', 'cNomen', 'Classification', 'PatientID', 'FamilyID', 'Phenotype', 'Comment']
 
     csvwriter.writerow(extract_head)
 
@@ -58,10 +61,25 @@ for filepath in glob.iglob('*.mut'):
     	    allelelist = [i for i, c in enumerate(nomen) if c.isupper()]
     	    refallele = nomen[allelelist[0]]
     	    altallele = nomen[allelelist[1]]
+            c_nomen= member.find('Variant/Nomenclature/cNomen').attrib['val']
     	    #print(refallele)
     	    #print(altallele)
 
-        elif vartype == 'Deletion' or vartype == 'Duplication':
+        else: 
+            gNomen = member.find('Variant/gNomen').attrib['val']
+
+            df = pd.read_csv(vcfname,sep='\t',skiprows=(0,1,2),header=(0))
+
+            for index, row in df.iterrows():
+                if gNomen in str(row['INFO']):
+                    refallele = row['REF']
+                    altallele = row['ALT']
+                else: 
+                    print('Please check variant: {0}'.format(gNomen))
+            c_nomen= member.find('Variant/Nomenclature/cNomen').attrib['val']
+
+
+        '''elif vartype == 'Deletion' or vartype == 'Duplication':
         	start = member.find('Variant').attrib['from']
         	#print(start)
         	end = member.find('Variant').attrib['to']
@@ -72,10 +90,11 @@ for filepath in glob.iglob('*.mut'):
         	#print(start)
         	end = member.find('Variant').attrib['to']
         	#print(end)
-        	inserted = member.find('Variant').attrib['inserted']
+        	inserted = member.find('Variant').attrib['inserted']'''
         	#print(inserted)
 
         transcript = member.find('Variant/Nomenclature').attrib['refSeq']
+        cNomen = transcript + ':' + 'c_nomen'
         #print(transcript)
 
         # creating a loop that ensures any variants that are classified on the old system are correctly converted to the 5 ranking system. 
@@ -119,16 +138,9 @@ for filepath in glob.iglob('*.mut'):
             else: 
             	comment = None 
 
-            # Adding a row to the csv file for each occurence (variation based on the variant type)
-            if vartype == 'Substitution':
-            	csvwriter.writerow([assembly, chromosome, gene, vartype, position, refallele, altallele, None, None, None, transcript, classification, patientID, familyID, phenotype, comment])
-            	count = count + 1
-            elif vartype == 'Deletion' or vartype == 'Duplication':
-            	csvwriter.writerow([assembly, chromosome, gene, vartype, None, None, None, start, end, None, transcript, classification, patientID, familyID, phenotype, comment])
-            	count = count + 1
-            elif vartype == 'Delins':
-            	csvwriter.writerow([assembly, chromosome, gene, vartype, None, None, None, start, end, inserted, transcript, classification, patientID, familyID, phenotype, comment])
-            	count = count + 1
+            # Adding a row to the csv file for each occurence 
+            csvwriter.writerow([assembly, chromosome, gene, vartype, position, refallele, altallele, transcript, cNomen ,classification, patientID, familyID, phenotype, comment])
+            count = count + 1
 
     extract_data.close() 
 
