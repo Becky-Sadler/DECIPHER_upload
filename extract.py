@@ -7,7 +7,7 @@ import pandas as pd
 import glob
 
 def cleanhtml(raw_html):
-	# removing the formatting and one line that I couldn't figure out a regex for)
+    # removing the formatting and one line that I couldn't figure out a regex for)
   rem_html = re.compile(r'<.*?>')
   rem_other = re.compile(r'p, li { white-space: pre-wrap; }')
   clean = rem_html.sub('', raw_html)
@@ -24,7 +24,7 @@ for filepath in glob.iglob('*.mut'):
     csvname = '{0}.csv'.format(filename)
 
 # Addition of VCF filename - to be used later on to get the ref and alt allele for non-substitution variants.
-    vcfname = '{0}'.vcf.format(filename)
+    vcfname = '{0}.vcf'.format(filename)
 # if on windows must use 'w' and newline='' rather than 'wb' to stop newlines being added. 
     extract_data = open(csvname, 'w', newline='', encoding='utf-8')
 
@@ -53,17 +53,17 @@ for filepath in glob.iglob('*.mut'):
 
         # Extracting the information that is specific to the different variant types.
         if vartype == 'Substitution':
-    	    position = member.find('Variant').attrib['pos']
-    	    #print(position)
-    	    #refallele = member.find('Variant').attrib['baseFrom'] This is the code used to pull the ref and alt allele directly from the XML (not right)
-    	    #altallele = member.find('Variant').attrib['baseTo']
-    	    nomen = member.find('Variant/gNomen').attrib['val']
-    	    allelelist = [i for i, c in enumerate(nomen) if c.isupper()]
-    	    refallele = nomen[allelelist[0]]
-    	    altallele = nomen[allelelist[1]]
+            position = member.find('Variant').attrib['pos']
+            #print(position)
+            #refallele = member.find('Variant').attrib['baseFrom'] This is the code used to pull the ref and alt allele directly from the XML (not right)
+            #altallele = member.find('Variant').attrib['baseTo']
+            nomen = member.find('Variant/gNomen').attrib['val']
+            allelelist = [i for i, c in enumerate(nomen) if c.isupper()]
+            refallele = nomen[allelelist[0]]
+            altallele = nomen[allelelist[1]]
             c_nomen= member.find('Variant/Nomenclature/cNomen').attrib['val']
-    	    #print(refallele)
-    	    #print(altallele)
+            #print(refallele)
+            #print(altallele)
 
         else: 
             gNomen = member.find('Variant/gNomen').attrib['val']
@@ -76,68 +76,75 @@ for filepath in glob.iglob('*.mut'):
                     altallele = row['ALT']
                     position = row['POS']
                 else: 
-                    print('Please check variant: {0}'.format(gNomen))
+                    with open('query.txt','a+') as f:
+                        f.seek(0)  
+                        if gNomen in f.read():
+                            f.close()
+                        else:
+                            f.write(gNomen + '\n')
+                            f.close()
+                            print('Please check variant: {0}'.format(gNomen))
             c_nomen= member.find('Variant/Nomenclature/cNomen').attrib['val']
 
 
         '''elif vartype == 'Deletion' or vartype == 'Duplication':
-        	start = member.find('Variant').attrib['from']
-        	#print(start)
-        	end = member.find('Variant').attrib['to']
-        	#print(end)
+            start = member.find('Variant').attrib['from']
+            #print(start)
+            end = member.find('Variant').attrib['to']
+            #print(end)
 
         elif vartype == 'Delins':
-        	start = member.find('Variant').attrib['from']
-        	#print(start)
-        	end = member.find('Variant').attrib['to']
-        	#print(end)
-        	inserted = member.find('Variant').attrib['inserted']'''
-        	#print(inserted)
+            start = member.find('Variant').attrib['from']
+            #print(start)
+            end = member.find('Variant').attrib['to']
+            #print(end)
+            inserted = member.find('Variant').attrib['inserted']'''
+            #print(inserted)
 
         transcript = member.find('Variant/Nomenclature').attrib['refSeq']
-        cNomen = transcript + ':' + 'c_nomen'
+        cNomen = transcript + ':' + c_nomen
         #print(transcript)
 
         # creating a loop that ensures any variants that are classified on the old system are correctly converted to the 5 ranking system. 
         if member.find('Classification').attrib['val'] == "CMGS_VGKL_5":
-        	classification = member.find('Classification').attrib['index']
+            classification = member.find('Classification').attrib['index']
         else:
-        	if member.find('Classification').attrib['index'] == 1:
-        		classification = 1
-        	elif member.find('Classification').attrib['val'] == 2:
-        		classification = 3
-        	elif member.find('Classification').attrib['val'] == 3:
-        		classification = 5  
-        	
+            if member.find('Classification').attrib['index'] == 1:
+                classification = 1
+            elif member.find('Classification').attrib['val'] == 2:
+                classification = 3
+            elif member.find('Classification').attrib['val'] == 3:
+                classification = 5  
+            
         #print(classification)
 
         # Loop to extract all the occurences for each variant
         for child in member.findall('Occurrences/Occurrence'):
             if child.find('Patient').text != None:
-            	patientID = child.find('Patient').text
-            	#print(patientID)
+                patientID = child.find('Patient').text
+                #print(patientID)
             else: 
-            	patientID = None 
+                patientID = None 
 
             if child.find('Family').text != None:
-            	familyID = child.find('Family').text
-            	#print(familyID)
+                familyID = child.find('Family').text
+                #print(familyID)
             else: 
-            	familyID = None 
+                familyID = None 
            
             if child.find('Phenotype').text != None:
-            	rawphenotype = child.find('Phenotype').text
-            	phenotype = cleanhtml(rawphenotype)
-            	#print(phenotype)
+                rawphenotype = child.find('Phenotype').text
+                phenotype = cleanhtml(rawphenotype)
+                #print(phenotype)
             else: 
-            	phenotype = None 
+                phenotype = None 
 
             if child.find('Comment').text != None:
-            	rawcomment = child.find('Comment').text
-    	        comment = cleanhtml(rawcomment)
-    	        #print(comment)
+                rawcomment = child.find('Comment').text
+                comment = cleanhtml(rawcomment)
+                #print(comment)
             else: 
-            	comment = None 
+                comment = None 
 
             # Adding a row to the csv file for each occurence 
             csvwriter.writerow([assembly, chromosome, gene, vartype, position, refallele, altallele, transcript, cNomen ,classification, patientID, familyID, phenotype, comment])
@@ -151,9 +158,9 @@ for filepath in glob.iglob('*.mut'):
          data = list(reader)
          row_count = len(data) 
     if row_count == (count +1):
-    	pass
+        pass
     else:
-    	print('The number of occurences does not match the number recorded in the csv. The count is ' + str(count + 1) + ' the number of lines in the csv file is ' + str(row_count))
+        print('The number of occurences does not match the number recorded in the csv. The count is ' + str(count + 1) + ' the number of lines in the csv file is ' + str(row_count))
 
     # Matches patientIDs using separate regexes and or statements(|)  
     Onumber_loc = re.compile(r'(\d{1,4}[A-Ha-h](\d){1,2})|([O0o]\d{7})')
