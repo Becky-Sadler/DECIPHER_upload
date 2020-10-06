@@ -50,9 +50,7 @@ for filepath in glob.iglob('*.mut'):
         
         vartype = member.find('Variant').attrib['type']
         #print(vartype)
-        
-        transcript = member.find('Variant/Nomenclature').attrib['refSeq']
-        
+
         # Extracting the information that is specific to the different variant types.
         if vartype == 'Substitution':
             position = member.find('Variant').attrib['pos']
@@ -69,6 +67,7 @@ for filepath in glob.iglob('*.mut'):
 
         else: 
             gNomen = member.find('Variant/gNomen').attrib['val']
+            c_nomen= member.find('Variant/Nomenclature/cNomen').attrib['val']
 
             df = pd.read_csv(vcfname,sep='\t',skiprows=(0,1,2),header=(0))
 
@@ -83,10 +82,14 @@ for filepath in glob.iglob('*.mut'):
                         if gNomen in f.read():
                             f.close()
                         else:
-                            f.write(gNomen + '  ' + transcript + '\n')
+<<<<<<< HEAD
+                            f.write(gNomen + '\t' + assembly + '\t' + gene + '\t' + c_nomen + '\n') 
+=======
+                            f.write(gNomen + '\n')
                             f.close()
+>>>>>>> parent of 351c797... Update extract.py
                             print('Please check variant: {0}'.format(gNomen))
-            c_nomen= member.find('Variant/Nomenclature/cNomen').attrib['val']
+                            f.close()
 
 
         '''elif vartype == 'Deletion' or vartype == 'Duplication':
@@ -102,7 +105,8 @@ for filepath in glob.iglob('*.mut'):
             #print(end)
             inserted = member.find('Variant').attrib['inserted']'''
             #print(inserted)
-            
+
+        transcript = member.find('Variant/Nomenclature').attrib['refSeq']
         cNomen = transcript + ':' + c_nomen
         #print(transcript)
 
