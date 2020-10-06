@@ -82,12 +82,9 @@ for filepath in glob.iglob('*.mut'):
                         if gNomen in f.read():
                             f.close()
                         else:
-<<<<<<< HEAD
                             f.write(gNomen + '\t' + assembly + '\t' + gene + '\t' + c_nomen + '\n') 
-=======
                             f.write(gNomen + '\n')
                             f.close()
->>>>>>> parent of 351c797... Update extract.py
                             print('Please check variant: {0}'.format(gNomen))
                             f.close()
 
