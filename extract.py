@@ -69,39 +69,25 @@ for filepath in glob.iglob('*.mut'):
             gNomen = member.find('Variant/gNomen').attrib['val']
             c_nomen= member.find('Variant/Nomenclature/cNomen').attrib['val']
 
-            df = pd.read_csv(vcfname,sep='\t',skiprows=(0,1,2),header=(0))
+            vcf_df = pd.read_csv(vcfname,sep='\t',skiprows=(0,1,2),header=(0))
+            
+            test = vcf_df[vcf_df['INFO'].str.contains(gNomen)]
+            if test.shape == (1,8):
+                refallele = test.iloc[0]['REF']
+                altallele = test.iloc[0]['ALT']
+                position = test.iloc[0]['POS']
+            elif test.shape == (0,8):
+                with open('query.txt','a+') as f:
+                    f.seek(0)  
+                    if gNomen in f.read():
+                        f.close()
+                    else:
+                         f.write(gNomen + '\t' + assembly + '\t' + gene + '\t' + c_nomen + '\n') 
+                         f.write(gNomen + '\n')
+                         f.close()
+                         print('Please check variant: {0}'.format(gNomen))
+                         f.close()
 
-            for index, row in df.iterrows():
-                if gNomen in str(row['INFO']):
-                    refallele = row['REF']
-                    altallele = row['ALT']
-                    position = row['POS']
-                else: 
-                    with open('query.txt','a+') as f:
-                        f.seek(0)  
-                        if gNomen in f.read():
-                            f.close()
-                        else:
-                            f.write(gNomen + '\t' + assembly + '\t' + gene + '\t' + c_nomen + '\n') 
-                            f.write(gNomen + '\n')
-                            f.close()
-                            print('Please check variant: {0}'.format(gNomen))
-                            f.close()
-
-
-        '''elif vartype == 'Deletion' or vartype == 'Duplication':
-            start = member.find('Variant').attrib['from']
-            #print(start)
-            end = member.find('Variant').attrib['to']
-            #print(end)
-
-        elif vartype == 'Delins':
-            start = member.find('Variant').attrib['from']
-            #print(start)
-            end = member.find('Variant').attrib['to']
-            #print(end)
-            inserted = member.find('Variant').attrib['inserted']'''
-            #print(inserted)
 
         transcript = member.find('Variant/Nomenclature').attrib['refSeq']
         cNomen = transcript + ':' + c_nomen
