@@ -38,65 +38,35 @@ for filepath in glob.iglob('*.mut'):
 
     # Creation of a for loop to go through each mutation (variant) in the .mut file
     for member in root.findall('Mutation'):
-        if member.attrib['refAssembly'] == 'NCBI36':
-            with open('old_assembly_{0}.txt'.format(filename),'a+') as f:
-                f.write(member.attrib['refAssembly'] + '\t' + member.attrib['geneSym'] + '\t' + member.find('Variant/Nomenclature/cNomen').attrib['val'] + '\n') 
-                f.close()
-        else:     
-            assembly = member.attrib['refAssembly']
-            #print(assembly)
+        assembly = member.attrib['refAssembly']
+        #print(assembly)
             
-            chromosome = member.attrib['chr']
+        chromosome = member.attrib['chr']
             #print(chromosome)
     
-            gene = member.attrib['geneSym']
+        gene = member.attrib['geneSym']
             #print(gene)
             
-            vartype = member.find('Variant').attrib['type']
+        vartype = member.find('Variant').attrib['type']
             #print(vartype)
 
-            # Extracting the information that is specific to the different variant types.
-            if vartype == 'Substitution':
-                position = member.find('Variant').attrib['pos']
+        # Extracting the information that is specific to the different variant types.
+        if vartype == 'Substitution':
+            position = member.find('Variant').attrib['pos']
                 #print(position)
                 #refallele = member.find('Variant').attrib['baseFrom'] This is the code used to pull the ref and alt allele directly from the XML (not right)
                 #altallele = member.find('Variant').attrib['baseTo']
-                nomen = member.find('Variant/gNomen').attrib['val']
-                allelelist = [i for i, c in enumerate(nomen) if c.isupper()]
-                refallele = nomen[allelelist[0]]
-                altallele = nomen[allelelist[1]]
-                c_nomen= member.find('Variant/Nomenclature/cNomen').attrib['val']
+            nomen = member.find('Variant/gNomen').attrib['val']
+            allelelist = [i for i, c in enumerate(nomen) if c.isupper()]
+            refallele = nomen[allelelist[0]]
+            altallele = nomen[allelelist[1]]
+            c_nomen= member.find('Variant/Nomenclature/cNomen').attrib['val']
                 #print(refallele)
                 #print(altallele)
-    
-            else: 
-                gNomen = member.find('Variant/gNomen').attrib['val']
-                c_nomen= member.find('Variant/Nomenclature/cNomen').attrib['val']
-    
-                vcf_df = pd.read_csv(vcfname,sep='\t',skiprows=(0,1,2),header=(0))
-                
-                test = vcf_df[vcf_df['INFO'].str.contains(gNomen)]
-                if test.shape == (1,8):
-                    refallele = test.iloc[0]['REF']
-                    altallele = test.iloc[0]['ALT']
-                    position = test.iloc[0]['POS']
-                elif test.shape == (0,8):
-                    with open('query.txt','a+') as f:
-                        f.seek(0)  
-                        if gNomen in f.read():
-                            f.close()
-                        else:
-                             f.write(gNomen + '\t' + assembly + '\t' + gene + '\t' + c_nomen + '\n') 
-                             f.write(gNomen + '\n')
-                             f.close()
-                             print('Please check variant: {0}'.format(gNomen))
-                             f.close()
-
-
             transcript = member.find('Variant/Nomenclature').attrib['refSeq']
             cNomen = transcript + ':' + c_nomen
-            #print(transcript)
-    
+                #print(transcript)
+        
             # creating a loop that ensures any variants that are classified on the old system are correctly converted to the 5 ranking system. 
             if member.find('Classification').attrib['val'] == "CMGS_VGKL_5":
                 classification = member.find('Classification').attrib['index']
@@ -107,42 +77,110 @@ for filepath in glob.iglob('*.mut'):
                     classification = 3
                 elif member.find('Classification').attrib['val'] == 3:
                     classification = 5  
-                
-            #print(classification)
-    
+                    
+                #print(classification)
+        
             # Loop to extract all the occurences for each variant
             for child in member.findall('Occurrences/Occurrence'):
                 if child.find('Patient').text != None:
                     patientID = child.find('Patient').text
-                    #print(patientID)
+                        #print(patientID)
                 else: 
                     patientID = None 
-    
+        
                 if child.find('Family').text != None:
                     familyID = child.find('Family').text
-                    #print(familyID)
+                        #print(familyID)
                 else: 
                     familyID = None 
-               
+                   
                 if child.find('Phenotype').text != None:
                     rawphenotype = child.find('Phenotype').text
                     phenotype = cleanhtml(rawphenotype)
-                    #print(phenotype)
+                        #print(phenotype)
                 else: 
                     phenotype = None 
-    
+        
                 if child.find('Comment').text != None:
                     rawcomment = child.find('Comment').text
                     comment = cleanhtml(rawcomment)
-                    #print(comment)
+                        #print(comment)
                 else: 
                     comment = None 
-    
+        
                 # Adding a row to the csv file for each occurence 
                 csvwriter.writerow([assembly, chromosome, gene, vartype, position, refallele, altallele, transcript, cNomen ,classification, patientID, familyID, phenotype, comment])
                 count = count + 1
+        else: 
+            gNomen = member.find('Variant/gNomen').attrib['val']
+            c_nomen= member.find('Variant/Nomenclature/cNomen').attrib['val']
+    
+            vcf_df = pd.read_csv(vcfname,sep='\t',skiprows=(0,1,2),header=(0))
+                
+            test = vcf_df[vcf_df['INFO'].str.contains(gNomen)]
+            if test.shape == (1,8):
+                refallele = test.iloc[0]['REF']
+                altallele = test.iloc[0]['ALT']
+                position = test.iloc[0]['POS']
+                transcript = member.find('Variant/Nomenclature').attrib['refSeq']
+                cNomen = transcript + ':' + c_nomen
+                    #print(transcript)
+            
+                # creating a loop that ensures any variants that are classified on the old system are correctly converted to the 5 ranking system. 
+                if member.find('Classification').attrib['val'] == "CMGS_VGKL_5":
+                    classification = member.find('Classification').attrib['index']
+                else:
+                    if member.find('Classification').attrib['index'] == 1:
+                        classification = 1
+                    elif member.find('Classification').attrib['val'] == 2:
+                        classification = 3
+                    elif member.find('Classification').attrib['val'] == 3:
+                        classification = 5  
+                        
+                    #print(classification)
+            
+                # Loop to extract all the occurences for each variant
+                for child in member.findall('Occurrences/Occurrence'):
+                    if child.find('Patient').text != None:
+                        patientID = child.find('Patient').text
+                            #print(patientID)
+                    else: 
+                        patientID = None 
+            
+                    if child.find('Family').text != None:
+                        familyID = child.find('Family').text
+                            #print(familyID)
+                    else: 
+                        familyID = None 
+                       
+                    if child.find('Phenotype').text != None:
+                        rawphenotype = child.find('Phenotype').text
+                        phenotype = cleanhtml(rawphenotype)
+                    else: 
+                        phenotype = None 
+            
+                    if child.find('Comment').text != None:
+                        rawcomment = child.find('Comment').text
+                        comment = cleanhtml(rawcomment)
+                    else: 
+                        comment = None 
+            
+                    # Adding a row to the csv file for each occurence 
+                    csvwriter.writerow([assembly, chromosome, gene, vartype, position, refallele, altallele, transcript, cNomen ,classification, patientID, familyID, phenotype, comment])
+                    count = count + 1
+            
+            elif test.shape == (0,8):
+                with open('{0}_not_in_VCF.txt'.format(filename),'a+') as f:
+                    f.seek(0)  
+                    if gNomen in f.read():
+                        f.close()
+                    else:
+                        f.write(gNomen + '\t' + assembly + '\t' + gene + '\t' + c_nomen + '\n') 
+                        f.close()
 
-    extract_data.close() 
+
+    extract_data.close()
+    print('CSV of all occurences in {0} has been created'.format(filename))
 
     # Test to ensure the number of lines in the csv file matches the number of occurances. 
     with open(csvname,"r",encoding="utf-8") as f:
@@ -159,7 +197,7 @@ for filepath in glob.iglob('*.mut'):
     # Matches initials 
     initials = re.compile(r'([A-Z]{2,5} )|([A-Z]{1,2}[a-z][A-Z]{1,2} )|([A-Z]{2}\'[A-Z] )|([A-Z]{1,2}[-.][A-Z]{1,2})|([A-Z]{2}[a-z][A-Z]{0,1} )|^([A-Z]{2})|([A-Z]{1-4}\()')
     # Matches patientIDs that contain the words in the list searchlist. 
-    searchlist = ['et al', '[Rr][Ee][Vv][Ii][Ee][Ww]', 'OR calc', '[Cc][Oo][Nn][Tt][Rr][Oo][Ll]', 'LOVD', 'OMGL', 'NCBI', 'mix up', 'GEL', '[Rr][Nn][Aa]', '[Rr]eclassification', 'GENQA', 'ClinVar', 'HGMD', 'ARVC', 'dbSNP', 'ExAC', 'NHLBI', 'gnomAD', 'TOPMED', 'WTCHG', 'NEQAS', 'E[VS][SP]', '(rs[\d ]\d+)']
+    searchlist = ['et al', '[Rr][Ee][Vv][Ii][Ee][Ww]', 'OR calc', '[Cc][Oo][Nn][Tt][Rr][Oo][Ll]', 'LOVD', 'OMGL', 'NCBI', 'HCM', 'mix up', 'GEL', '[Rr][Nn][Aa]', '[Rr]eclassification', 'GENQA', 'ClinVar', 'HGMD', 'ARVC', 'dbSNP', 'ExAC', 'NHLBI', 'gnomAD', 'TOPMED', 'WTCHG', 'NEQAS', 'E[VS][SP]', '(rs[\d ]\d+)']
     words = re.compile("|".join(searchlist))
     # Matches family_IDs (CAR/GEN/Number assortment)
     family_id = re.compile(r'(CAR[\d]{1,5})|(GEN[\d]{1,5})|(^\d{1,4}$)|(^\d{1,4}[\( ])|(\d{1,2},\d{1,5})')
@@ -195,31 +233,4 @@ for filepath in glob.iglob('*.mut'):
             df.drop(index, inplace = True)
 
     df.to_csv('filtered_{}.csv'.format(gene), index=False) 
-
-
-''' Check between the filtered csv and a csv that I manually went through and deleted non-patient records. This is used to verify that the programme
-    is extracting the correct rows from the complete csv. 
-    '''
-'''
-known = [tuple()]
-with open('test_csvs/{}_chopped.csv'.format(gene)) as csvfile:
-    reader = csv.DictReader(csvfile, delimiter = ',')
-    dicts = list(reader)
-    print('Known: ' + str(len(dicts)))
-    for line in dicts:
-        if line['PatientID'] == '' and line['FamilyID'] == '':
-            continue
-        else:
-            known.append((line['PatientID'], line['FamilyID']))
-filtered = [tuple()]
-with open('filtered_{}.csv'.format(gene)) as csvfile:
-    reader = csv.DictReader(csvfile, delimiter = ',')
-    dicts = list(reader)
-    print('Filtered: ' + str(len(dicts)))
-    for line in dicts:
-        filtered.append((line['PatientID'], line['FamilyID']))
-check = [x for x in known if x not in filtered]
-print(check)
-print('--------------------------------------------------------------------------------')
-check1 = [x for x in filtered if x not in known]
-print(check1)'''
+    print('Filtered CSV file of all PATIENT occurences in {0} has been created'.format(filename))
