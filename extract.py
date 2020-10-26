@@ -39,7 +39,8 @@ def reference_alt_values():
     allelelist = [i for i, c in enumerate(nomen) if c.isupper()]
     refallele = nomen[allelelist[0]]
     altallele = nomen[allelelist[1]]
-    return position, refallele, altallele
+    variant = 'SNV'
+    return position, refallele, altallele, variant
 
 def occurences():
     if child.find('Patient').text != None:
@@ -78,6 +79,22 @@ def find_classification():
             classification = 5
     return classification
 
+def find_CNV():
+    start = None
+    end = None
+    inserted = None
+    if vartype == 'Deletion' or vartype == 'Duplication':
+        # The start and end are flipped in the .mut file (On DECIPHER end must be larger than start)
+        end = member.find('Variant').attrib['from']
+        start = member.find('Variant').attrib['to']
+        inserted = None
+
+    elif vartype == 'Delins':
+    	start = member.find('Variant').attrib['from']
+    	end = member.find('Variant').attrib['to']
+    	inserted = member.find('Variant').attrib['inserted']
+    return start, end, inserted
+
 def compile_regex():
     # Matches patientIDs using separate regexes and or statements(|)  
     Onumber_loc = re.compile(r'(\d{1,4}[A-Ha-h](\d){1,2})|([O0o]\d{7})')
@@ -108,7 +125,7 @@ for filepath in glob.iglob('*.mut'):
     # create csv writer object 
 
     csvwriter = csv.writer(extract_data)
-    extract_head = ['Assembly', 'Chrom', 'Gene', 'VarType', 'Pos', 'RefAllele', 'AltAllele', 'Transcript', 'cNomen', 'Classification', 'PatientID', 'FamilyID', 'Phenotype', 'Comment']
+    extract_head = ['Variant', 'Assembly', 'Chrom', 'Gene', 'VarType', 'Pos', 'RefAllele', 'AltAllele', 'Start', 'End', 'Inserted', 'Transcript', 'cNomen', 'Classification', 'PatientID', 'FamilyID', 'Phenotype', 'Comment']
 
     csvwriter.writerow(extract_head)
 
@@ -127,38 +144,47 @@ for filepath in glob.iglob('*.mut'):
     
             # Extracting the information that is specific to the different variant types.
             if vartype == 'Substitution':
-                position, refallele, altallele = reference_alt_values()
+                position, refallele, altallele, variant = reference_alt_values()
                         
                 # Loop to extract all the occurences for each variant
                 for child in member.findall('Occurrences/Occurrence'):
                     patientID, familyID, phenotype, comment = occurences()
                     # Adding a row to the csv file for each occurence 
-                    csvwriter.writerow([assembly, chromosome, gene, vartype, position, refallele, altallele, transcript, cNomen ,classification, patientID, familyID, phenotype, comment])
+                    csvwriter.writerow([ variant, assembly, chromosome, gene, vartype, position, refallele, altallele, None, None, None, transcript, cNomen ,classification, patientID, familyID, phenotype, comment])
                     count = count + 1
             else: 
                 gNomen = member.find('Variant/gNomen').attrib['val']
                 
-                if assembly == 'GRCh37': 
+                if assembly == 'GRCh37':
         
-                    vcf_df = pd.read_csv(vcfname,sep='\t',skiprows=(0,1,2),header=(0))
+                    my_cols = ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO']
+                    vcf_df = pd.read_csv(vcfname,skiprows=(0,1,2),header=(0), usecols=my_cols, sep='\s*\t')
                         
                     test = vcf_df[vcf_df['INFO'].str.contains(gNomen)]
-                    if test.shape == (1,8) or (2,8):
+                    if test.shape == (1,8) or test.shape == (2,8):
                         refallele = test.iloc[0]['REF']
                         altallele = test.iloc[0]['ALT']
                         position = test.iloc[0]['POS']
                         
-                        '''if len(refallele) <= 100:
-                        
-                            cNomen = transcript + ':' + c_nomen'''
-                                
-                        # Loop to extract all the occurences for each variant
-                        for child in member.findall('Occurrences/Occurrence'):
-                            patientID, familyID, phenotype, comment = occurences()
+                        if len(str(refallele)) >= 100 or len(str(altallele)) >=100:
+                            variant = 'CNV'
+                            start, end, inserted = find_CNV()
+                            for child in member.findall('Occurrences/Occurrence'):
+                                patientID, familyID, phenotype, comment = occurences()
                     
-                            # Adding a row to the csv file for each occurence 
-                            csvwriter.writerow([assembly, chromosome, gene, vartype, position, refallele, altallele, transcript, cNomen ,classification, patientID, familyID, phenotype, comment])
-                            count = count + 1
+                                # Adding a row to the csv file for each occurence 
+                                csvwriter.writerow([variant, assembly, chromosome, gene, vartype, None, None, None, start, end, inserted, transcript, cNomen ,classification, patientID, familyID, phenotype, comment])
+                                count = count + 1
+                        
+                        else: 
+                            variant = 'SNV'
+                            # Loop to extract all the occurences for each variant
+                            for child in member.findall('Occurrences/Occurrence'):
+                                patientID, familyID, phenotype, comment = occurences()
+                    
+                                # Adding a row to the csv file for each occurence 
+                                csvwriter.writerow([variant, assembly, chromosome, gene, vartype, position, refallele, altallele, None, None, None, transcript, cNomen ,classification, patientID, familyID, phenotype, comment])
+                                count = count + 1                    
                     else:
                         with open('{0}_not_in_VCF.txt'.format(filename),'a+') as f:
                             f.write(gNomen + '\t' + assembly + '\t' + gene + '\n') 
@@ -172,7 +198,7 @@ for filepath in glob.iglob('*.mut'):
     extract_data.close()
 
     # Test to ensure the number of lines in the csv file matches the number of occurances. 
-    with open(csvname,"r",encoding="utf-8") as f:
+    with open(csvname,"r",encoding='utf-8') as f:
          reader = csv.reader(f,delimiter = ",")
          data = list(reader)
          row_count = len(data) 
