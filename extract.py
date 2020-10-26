@@ -3,7 +3,8 @@
     Occurences are then filtered to remove non-patient records, such as journal entries/population data. 
     
     Inputs: .mut file & .vcf file for each gene 
-    Outputs: 
+    Outputs: A filtered CSV file of each gene with the required information for upload & text
+    file with the non substitution changes that are not from build 37.
 '''
 
 import xml.etree.ElementTree as ET
@@ -33,6 +34,7 @@ def common_values():
     cNomen = transcript + ':' + c_nomen
     return assembly, chromosome, gene, vartype, transcript, cNomen
 
+# Function to get the reference and alt allele information as well as the position.
 def reference_alt_values():
     position = member.find('Variant').attrib['pos']
     nomen = member.find('Variant/gNomen').attrib['val']
@@ -42,7 +44,9 @@ def reference_alt_values():
     variant = 'SNV'
     return position, refallele, altallele, variant
 
-def occurences():
+# Loop through to get information about each occurence 
+def occurences(artefact_pattern):
+    artefact = False
     if child.find('Patient').text != None:
         patientID = child.find('Patient').text
     else: 
@@ -62,10 +66,15 @@ def occurences():
     if child.find('Comment').text != None:
         rawcomment = child.find('Comment').text
         comment = cleanhtml(rawcomment)
+        if re.search(artefact_pattern, str(comment)):
+            artefact = True
+        else: 
+            artefact = False
     else: 
         comment = None 
-    return patientID, familyID, phenotype, comment
+    return patientID, familyID, phenotype, comment, artefact 
     
+# Getting the classification of each variant and converting from the old 3 tier system where neccessary
 def find_classification():
     classification = None
     if member.find('Classification').attrib['val'] == "CMGS_VGKL_5":
@@ -79,6 +88,7 @@ def find_classification():
             classification = 5
     return classification
 
+# Getting the CNV specific information (start, end + inserted sequence)
 def find_CNV():
     start = None
     end = None
@@ -95,6 +105,7 @@ def find_CNV():
     	inserted = member.find('Variant').attrib['inserted']
     return start, end, inserted
 
+# Function to compile all the regex patterns for filtering out non-patient occurences 
 def compile_regex():
     # Matches patientIDs using separate regexes and or statements(|)  
     Onumber_loc = re.compile(r'(\d{1,4}[A-Ha-h](\d){1,2})|([O0o]\d{7})')
@@ -108,7 +119,7 @@ def compile_regex():
     return Onumber_loc, initials, words, family_id
 
 # A loop over all the .mut files present in the current working directory.
-for filepath in glob.iglob('*.mut'):
+for filepath in glob.iglob('alamut_files\*.mut'):
     tree = ET.parse(filepath)
     root = tree.getroot()
 
@@ -130,16 +141,17 @@ for filepath in glob.iglob('*.mut'):
     csvwriter.writerow(extract_head)
 
     count = 0
-    artefact = re.compile(r'[Aa][Rr][Tt][Ee][Ff][Aa][Cc][Tt]')
+    artefact_pattern = re.compile(r'[Aa][Rr][Tt][Ee][Ff][Aa][Cc][Tt]')
     
     # Creation of a for loop to go through each mutation (variant) in the .mut file
     for member in root.findall('Mutation'):
+        # Look for the work artefact in the variant notes section. 
         var_note = member.find('Note').attrib['val']
-        if re.search(artefact, str(var_note)):
+        if re.search(artefact_pattern, str(var_note)):
             continue
         else:
+            # Get values common across all variant types
             assembly, chromosome, gene, vartype, transcript, cNomen = common_values()
-            # creating a loop that ensures any variants that are classified on the old system are correctly converted to the 5 ranking system. 
             classification = find_classification()  
     
             # Extracting the information that is specific to the different variant types.
@@ -148,10 +160,13 @@ for filepath in glob.iglob('*.mut'):
                         
                 # Loop to extract all the occurences for each variant
                 for child in member.findall('Occurrences/Occurrence'):
-                    patientID, familyID, phenotype, comment = occurences()
-                    # Adding a row to the csv file for each occurence 
-                    csvwriter.writerow([ variant, assembly, chromosome, gene, vartype, position, refallele, altallele, None, None, None, transcript, cNomen ,classification, patientID, familyID, phenotype, comment])
-                    count = count + 1
+                    patientID, familyID, phenotype, comment, artefact = occurences(artefact_pattern)
+                    if artefact == True:
+                        continue
+                    elif artefact == False: 
+                        # Adding a row to the csv file for each occurence 
+                        csvwriter.writerow([ variant, assembly, chromosome, gene, vartype, position, refallele, altallele, None, None, None, transcript, cNomen ,classification, patientID, familyID, phenotype, comment])
+                        count = count + 1
             else: 
                 gNomen = member.find('Variant/gNomen').attrib['val']
                 
@@ -170,28 +185,32 @@ for filepath in glob.iglob('*.mut'):
                             variant = 'CNV'
                             start, end, inserted = find_CNV()
                             for child in member.findall('Occurrences/Occurrence'):
-                                patientID, familyID, phenotype, comment = occurences()
-                    
-                                # Adding a row to the csv file for each occurence 
-                                csvwriter.writerow([variant, assembly, chromosome, gene, vartype, None, None, None, start, end, inserted, transcript, cNomen ,classification, patientID, familyID, phenotype, comment])
-                                count = count + 1
+                                patientID, familyID, phenotype, comment, artefact = occurences(artefact_pattern)
+                                if artefact == True:
+                                    continue
+                                elif artefact == False:
+                                    # Adding a row to the csv file for each occurence 
+                                    csvwriter.writerow([variant, assembly, chromosome, gene, vartype, None, None, None, start, end, inserted, transcript, cNomen ,classification, patientID, familyID, phenotype, comment])
+                                    count = count + 1
                         
                         else: 
                             variant = 'SNV'
                             # Loop to extract all the occurences for each variant
                             for child in member.findall('Occurrences/Occurrence'):
-                                patientID, familyID, phenotype, comment = occurences()
-                    
-                                # Adding a row to the csv file for each occurence 
-                                csvwriter.writerow([variant, assembly, chromosome, gene, vartype, position, refallele, altallele, None, None, None, transcript, cNomen ,classification, patientID, familyID, phenotype, comment])
-                                count = count + 1                    
+                                patientID, familyID, phenotype, comment, artefact = occurences(artefact_pattern)
+                                if artefact == True:
+                                    continue
+                                elif artefact == False: 
+                                    # Adding a row to the csv file for each occurence 
+                                    csvwriter.writerow([variant, assembly, chromosome, gene, vartype, position, refallele, altallele, None, None, None, transcript, cNomen ,classification, patientID, familyID, phenotype, comment])
+                                    count = count + 1                    
                     else:
-                        with open('{0}_not_in_VCF.txt'.format(filename),'a+') as f:
+                        with open('to_check\{0}_not_in_VCF.txt'.format(gene),'a+') as f:
                             f.write(gNomen + '\t' + assembly + '\t' + gene + '\n') 
                             f.close()
                 
                 else:
-                    with open('{0}_not_in_VCF.txt'.format(filename),'a+') as f:
+                    with open('to_check\{0}_not_in_VCF.txt'.format(gene),'a+') as f:
                         f.write(gNomen + '\t' + assembly + '\t' + gene + '\n') 
                         f.close()
 
@@ -243,7 +262,7 @@ for filepath in glob.iglob('*.mut'):
     df.drop(df.loc[df['Classification']==2].index, inplace=True)
     
     #Creating filtered CSV file from the pandas dataframe
-    df.to_csv('filtered_{}.csv'.format(gene), index=False) 
+    df.to_csv('to_upload\{}.csv'.format(gene), index=False) 
     # Removal of the CSV with all occurences - can comment this line if both outputs are wanted 
     os.remove(csvname)
-    print('Filtered CSV file of all PATIENT occurences in {0} has been created'.format(filename))
+    print('Filtered CSV file of all PATIENT occurences in {0} has been created'.format(gene))
