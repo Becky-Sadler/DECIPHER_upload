@@ -9,7 +9,7 @@ user_input = input('Please enter gene name: ')
 gene = user_input.upper()
               
 known = [tuple()]
-with open('test_csvs/{}_chopped.csv'.format(gene)) as csvfile:
+with open('{}_chopped.csv'.format(gene), encoding="utf8") as csvfile:
     reader = csv.DictReader(csvfile, delimiter = ',')
     dicts = list(reader)
     print('Known: ' + str(len(dicts)))
@@ -20,7 +20,7 @@ with open('test_csvs/{}_chopped.csv'.format(gene)) as csvfile:
             known.append((line['PatientID'], line['FamilyID']))
 
 filtered = [tuple()]
-with open('filtered_{}.csv'.format(gene)) as csvfile:
+with open('{}.csv'.format(gene), encoding="utf8") as csvfile:
     reader = csv.DictReader(csvfile, delimiter = ',')
     dicts = list(reader)
     print('Filtered: ' + str(len(dicts)))
