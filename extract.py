@@ -173,7 +173,7 @@ for filepath in glob.iglob('alamut_files\*.mut'):
                 if assembly == 'GRCh37':
         
                     my_cols = ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO']
-                    vcf_df = pd.read_csv(vcfname,skiprows=(0,1,2),header=(0), usecols=my_cols, sep='\s*\t')
+                    vcf_df = pd.read_csv(vcfname,skiprows=(0,1,2),header=(0), usecols=my_cols, sep='\s*\t', engine='python')
                         
                     test = vcf_df[vcf_df['INFO'].str.contains(gNomen)]
                     if test.shape == (1,8) or test.shape == (2,8):
