@@ -84,13 +84,11 @@ response = POST(url, keys, patientdata)
 patient = response.json()
 patients_id = (patient[0]['patient_id'])
 
+for filepath in glob.iglob('to_upload\*.csv'):
 # Turn each row of the csv file into a dictionary
 with open('short.csv') as csvfile:
     reader = csv.DictReader(csvfile, delimiter = ",")
     dicts = list(reader) 
-
-# Filter out the class1 and 2 variants (do not need to be uploaded)
-filtered = list(filter(lambda i: i['Classification'] != ('1' or '2') , dicts))
 
 # Assigning the url for creating snvs and cnvs.
 snv_url = URL('/patients/{0}/snvs'.format(patients_id))
@@ -101,10 +99,10 @@ cnv_ids = []
 filtered_snv = []
 filtered_cnv = [] 
 
-for f in filtered:
-    if f['VarType'] == 'Duplication' or f['VarType'] == 'Deletion':
+for f in dicts:
+    if f['Variant'] == 'CNV':
         filtered_cnv.append(f)
-    elif f['VarType'] == 'Substitution':
+    elif f['Variant'] == 'SNV':
         filtered_snv.append(f)
 
 # Pull out the relevant information from the dictionaries into JSON for upload. 
