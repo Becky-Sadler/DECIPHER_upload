@@ -2,7 +2,7 @@ import requests
 import json
 import yaml
 from requests import HTTPError
-#import pandas as pd 
+import glob
 import re
 import csv
 
@@ -85,106 +85,106 @@ patient = response.json()
 patients_id = (patient[0]['patient_id'])
 
 for filepath in glob.iglob('to_upload\*.csv'):
-# Turn each row of the csv file into a dictionary
-with open('short.csv') as csvfile:
-    reader = csv.DictReader(csvfile, delimiter = ",")
-    dicts = list(reader) 
-
-# Assigning the url for creating snvs and cnvs.
-snv_url = URL('/patients/{0}/snvs'.format(patients_id))
-cnv_url = URL('/patients/{0}/cnvs'.format(patients_id))
-
-snv_ids = [] #list to hold the ids for the created snvs
-cnv_ids = []
-filtered_snv = []
-filtered_cnv = [] 
-
-for f in dicts:
-    if f['Variant'] == 'CNV':
-        filtered_cnv.append(f)
-    elif f['Variant'] == 'SNV':
-        filtered_snv.append(f)
-
-# Pull out the relevant information from the dictionaries into JSON for upload. 
-for i in filtered_snv: 
-    snv = {}
-    snv['patient_id'] = patients_id
-
-    if i['Assembly'] == 'GRCh37':
-        snv['assembly'] = 'GRCh37/hg19'
-    elif i['Assembly'] == 'GRCh38':
-        snv['assembly'] = 'GRCh38'
-    else:
-        print('Check transcript')
-
-    snv['chr'] = i['Chrom']
-
-    snv['start'] = i['Pos']
-
-    snv['ref_allele'] = i['RefAllele']
-    snv['alt_allele'] = i['AltAllele']
-
-    if re.match("homozygous$", i['Phenotype'], flags=re.I): #re.I == ignorecase
-        snv['genotype'] = 'Homozygous'
-    elif re.match("homozygous$", i['Comment'], flags=re.I):
-        snv['genotype'] = 'Homozygous'
-    else:
-        snv['genotype'] = 'Heterozygous'
-
-    snv['user_transcript'] = i['Transcript']
-
-    classification = i['Classification']
-    if classification == '3':
-        snv['pathogenicity'] = 'Uncertain'
-    elif classification == '4':
-        snv['pathogenicity'] = 'Likely pathogenic'
-    elif classification == '5':
-        snv['pathogenicity'] = 'Pathogenic'
+    # Turn each row of the csv file into a dictionary
+    with open(filepath) as csvfile:
+        reader = csv.DictReader(csvfile, delimiter = ",")
+        dicts = list(reader) 
     
-    # Creating JSON
-    snvdata = json.dumps([snv])
-    # Posting SNV
-    response = POST(snv_url, keys, snvdata)
-    # Extracting the SNV_id and adding them to a list. 
-    JSONsnv = response.json()
-    id_snv = (JSONsnv[0]['patient_snv_id'])
-    snv_ids.append(id_snv)
-
-
-for i in filtered_cnv:
-    cnv = {}
-    cnv['patient_id'] = patients_id
-    cnv['chr'] = i['Chrom']
+    # Assigning the url for creating snvs and cnvs.
+    snv_url = URL('/patients/{0}/snvs'.format(patients_id))
+    cnv_url = URL('/patients/{0}/cnvs'.format(patients_id))
     
-    if i['Assembly'] == 'GRCh37':
-        cnv['assembly'] = 'GRCh37/hg19'
-    elif i['Assembly'] == 'GRCh38':
-        cnv['assembly'] == 'GRCh38'
-
-    cnv['start'] = i['Start']
-    cnv['end'] = i['End']
-    cnv['variant_class'] = i['VarType']
-
-    if re.match('homozygous$', i['Phenotype'], flags=re.I):
-        cnv['genotype'] = 'Homozygous'
-    elif re.match('homozygous$', i['Comment'], flags=re.I):
-        cnv['genotype'] = 'Homozygous'
-    else:
-        cnv['genotype'] = 'Heterozygous' 
+    snv_ids = [] #list to hold the ids for the created snvs
+    cnv_ids = []
+    filtered_snv = []
+    filtered_cnv = [] 
     
-    classification = i['Classification']
-    if classification == '3':
-        cnv['pathogenicity'] = 'Uncertain'
-    elif classification == '4':
-        cnv['pathogenicity'] = 'Likely pathogenic'
-    elif classification == '5':
-        cnv['pathogenicity'] = 'Pathogenic'
-
-    # Creating JSON
-    cnvdata = json.dumps([cnv])
-    # Posting SNV
-    response = POST(cnv_url, keys, cnvdata)
-    # Extracting the SNV_id and adding them to a list.
-    JSONcnv = response.json()
-    id_cnv = (JSONcnv[0]['patient_cnv_id'])
-    cnv_ids.append(id_cnv)
+    for f in dicts:
+        if f['Variant'] == 'CNV':
+            filtered_cnv.append(f)
+        elif f['Variant'] == 'SNV':
+            filtered_snv.append(f)
+    
+    # Pull out the relevant information from the dictionaries into JSON for upload. 
+    for i in filtered_snv: 
+        snv = {}
+        snv['patient_id'] = patients_id
+    
+        if i['Assembly'] == 'GRCh37':
+            snv['assembly'] = 'GRCh37/hg19'
+        elif i['Assembly'] == 'GRCh38':
+            snv['assembly'] = 'GRCh38'
+        else:
+            print('Check transcript')
+    
+        snv['chr'] = i['Chrom']
+    
+        snv['start'] = i['Pos']
+    
+        snv['ref_allele'] = i['RefAllele']
+        snv['alt_allele'] = i['AltAllele']
+    
+        if re.match("homozygous$", i['Phenotype'], flags=re.I): #re.I == ignorecase
+            snv['genotype'] = 'Homozygous'
+        elif re.match("homozygous$", i['Comment'], flags=re.I):
+            snv['genotype'] = 'Homozygous'
+        else:
+            snv['genotype'] = 'Heterozygous'
+    
+        snv['user_transcript'] = i['Transcript']
+    
+        classification = i['Classification']
+        if classification == '3':
+            snv['pathogenicity'] = 'Uncertain'
+        elif classification == '4':
+            snv['pathogenicity'] = 'Likely pathogenic'
+        elif classification == '5':
+            snv['pathogenicity'] = 'Pathogenic'
+        
+        # Creating JSON
+        snvdata = json.dumps([snv])
+        # Posting SNV
+        response = POST(snv_url, keys, snvdata)
+        # Extracting the SNV_id and adding them to a list. 
+        JSONsnv = response.json()
+        id_snv = (JSONsnv[0]['patient_snv_id'])
+        snv_ids.append(id_snv)
+    
+    
+    for i in filtered_cnv:
+        cnv = {}
+        cnv['patient_id'] = patients_id
+        cnv['chr'] = i['Chrom']
+        
+        if i['Assembly'] == 'GRCh37':
+            cnv['assembly'] = 'GRCh37/hg19'
+        elif i['Assembly'] == 'GRCh38':
+            cnv['assembly'] == 'GRCh38'
+    
+        cnv['start'] = i['Start']
+        cnv['end'] = i['End']
+        cnv['variant_class'] = i['VarType']
+    
+        if re.match('homozygous$', i['Phenotype'], flags=re.I):
+            cnv['genotype'] = 'Homozygous'
+        elif re.match('homozygous$', i['Comment'], flags=re.I):
+            cnv['genotype'] = 'Homozygous'
+        else:
+            cnv['genotype'] = 'Heterozygous' 
+        
+        classification = i['Classification']
+        if classification == '3':
+            cnv['pathogenicity'] = 'Uncertain'
+        elif classification == '4':
+            cnv['pathogenicity'] = 'Likely pathogenic'
+        elif classification == '5':
+            cnv['pathogenicity'] = 'Pathogenic'
+    
+        # Creating JSON
+        cnvdata = json.dumps([cnv])
+        # Posting SNV
+        response = POST(cnv_url, keys, cnvdata)
+        # Extracting the SNV_id and adding them to a list.
+        JSONcnv = response.json()
+        id_cnv = (JSONcnv[0]['patient_cnv_id'])
+        cnv_ids.append(id_cnv)
