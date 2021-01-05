@@ -1,4 +1,4 @@
-#DECIPHER Variant Upload
+# DECIPHER Variant Upload
 
 This project can be used to extract variant occurences from Alamut and upload them to the DECIPHER database via their API. 
 
