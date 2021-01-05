@@ -5,7 +5,7 @@
     Inputs: .mut file & .vcf file for each gene 
     Outputs: A filtered CSV file of each gene with the required information for upload & text
     file with the non substitution changes that are not from build 37.
-    (+ non-filtered CSV if line 233 is uncommented)
+    (+ non-filtered CSV if line 234 is uncommented)
 '''
 
 import xml.etree.ElementTree as ET
