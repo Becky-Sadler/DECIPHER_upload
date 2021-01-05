@@ -1,6 +1,6 @@
-# DECIPHER Variant Upload
+# DECIPHER Variant Upload 
 
-This project can be used to extract variant occurences from Alamut and upload them to the DECIPHER database via their API. 
+Within Alamut variant occurences can be used to provide information about each patient occurence of a variant. They contain fields such as patient ID, family ID, phenotype, comment etc. To upload each patient and their corresponding variants to a DECIPHER project, the variant information and important patient specific information first must be extracted from Alamut. This project can be used to extract variant occurences from Alamut and then upload each to the DECIPHER database via their API.
 
 ## Prerequisites
 
