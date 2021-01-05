@@ -5,6 +5,7 @@
     Inputs: .mut file & .vcf file for each gene 
     Outputs: A filtered CSV file of each gene with the required information for upload & text
     file with the non substitution changes that are not from build 37.
+    (+ non-filtered CSV if line 233 is uncommented)
 '''
 
 import xml.etree.ElementTree as ET
@@ -230,6 +231,7 @@ for filepath in glob.iglob('alamut_files\*.mut'):
 
     # Opening the CSV file as a dataframe using pandas
     df = pd.read_csv(csvname)
+    #df.to_csv('{}_chopped.csv'.format(gene), index=False) 
 
     #Loop through df
     for index, row in df.iterrows():
